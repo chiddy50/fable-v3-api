@@ -34,6 +34,8 @@ export class TransactionService implements ITransactionService {
     ): Promise<void> => {
 
         const { id } = req.params;
+        const { narration } = req.body;
+
         const storyId = id;
         const amount = 0.05;
         const currency = 'usd';
@@ -45,9 +47,9 @@ export class TransactionService implements ITransactionService {
                 amount,
                 currency,
                 destination: deposit_address,
-                mode: "tip",
-                idempotencyKey: `${storyId}`,
-                // webhook: { url: config.webhookURL },
+                mode: "payment",
+                // idempotencyKey: `${storyId}`,
+                // webhook: { url: "https://tions-put-teaching-qty.trycloudflare.com/transactions/webhook" },
             });
             
             // The id value can also be used to query the status of the payment intent manually
@@ -58,17 +60,19 @@ export class TransactionService implements ITransactionService {
                 type: "create-story",
                 amount: amount.toString(),
                 currency,
+                narration,
                 deposit_address,
                 clientSecret: clientSecret.toString(),
                 id: id.toString(),
             });
 
-            // const { success, message } = await code.webhook.register({
-            //     intent: id,
-            //     url: process.env.WEBHOOK_URL ?? "",
-            // })
+            const { success, message } = await code.webhook.register({
+                intent: id,
+                // url: process.env.WEBHOOK_URL ?? "",
+                url: "https://tions-put-teaching-qty.trycloudflare.com/transactions/webhook"
+            });
         
-            // console.log('Registered webhook', success, message);
+            console.log('Registered webhook', success, message);
 
             res.status(200).json({ 
                 data: { 
@@ -83,7 +87,6 @@ export class TransactionService implements ITransactionService {
         }
     }
 
-
     public verifyIntent = async (
         req: CustomRequest,
         res: Response
@@ -96,20 +99,113 @@ export class TransactionService implements ITransactionService {
 
             const transaction = await this.handleIntentValidation(id, storyId);
 
-            // if (!transaction) throw new Error("Transaction Not Found");
+            if (!transaction) throw new Error("Transaction Not Found");
 
             // const { status } = await code.paymentIntents.getStatus({ intent: id });
 
             res.status(200).json({ 
                 data: { 
-                    // status, 
-                    id, transaction
+                    transaction
                 }, 
                 error: false, 
                 message: "success" 
             });
         } catch (error) {
             console.error(error);
+            this.errorService.handleErrorResponse(error)(res);   
+        }
+    }
+
+    public confirmTransaction = async (
+        req: CustomRequest,
+        res: Response
+    ): Promise<void> => {
+        try {
+            const { id } = req.params;
+            const { storyId, clientSecret, destination, locale, mode } = req.body;
+            const user: IJwtPayload = req.user as IJwtPayload;    
+
+            const transaction: any = await this.transactionRepo.get({
+                where: { 
+                    unique_id: id, 
+                    storyId, 
+                    key: clientSecret,
+                    deposit_address: destination
+                },
+            });
+    
+            if (!transaction) {
+                throw new Error("Could not update transaction")
+            }
+
+            const updatedTransaction: any = await this.transactionRepo.update({
+                where: { 
+                    id: transaction.id,
+                    unique_id: id, 
+                    deposit_address: destination,
+                    storyId 
+                },
+                data: {
+                    status: "completed",
+                    locale, 
+                    mode,
+                    confirmedAt: new Date(),
+                }
+            });
+
+            const updateStory: any = await this.storyRepo.update({
+                where: { 
+                    id: storyId,
+                    userId: user?.id,   
+                },
+                data: {
+                    paidAt: new Date(),
+                    isPaid: true
+                }
+            });
+
+            res.status(200).json({ 
+                data: { 
+                    transaction: updatedTransaction,
+                    story: updateStory
+                }, 
+                error: false, 
+                message: "success" 
+            });
+
+        } catch (error) {
+            console.error(error);
+            this.errorService.handleErrorResponse(error)(res);   
+        }
+    }
+
+    public deleteTransaction = async (
+        req: CustomRequest,
+        res: Response
+    ): Promise<void> => {
+        const { id } = req.params;
+
+        try {
+            const transaction: any = await this.transactionRepo.get({
+                where: { unique_id: id },
+            });
+
+            const deleted = await this.transactionRepo.delete({ where: { unique_id: id } });
+
+            if(!deleted){
+                throw new Error("Could not remove transaction")
+            }
+
+            res.status(200).json({ 
+                data: { 
+                    story: deleted
+                }, 
+                error: false, 
+                message: "success" 
+            });
+
+        } catch (error) {
+            console.error(error);   
             this.errorService.handleErrorResponse(error)(res);   
         }
     }
@@ -122,13 +218,22 @@ export class TransactionService implements ITransactionService {
         const config = useConfig();
         const token: string = req.body;
 
-        console.log('Received webhook event:', token);
+        console.log('Received webhook event:');
+        console.log({body: req.body});
+        
 
         try {
             const publicKey = config.codeSequencerPublicKey;
-
+            res.status(200).json({ 
+                data: { 
+                   body: req.body,
+                   publicKey: publicKey
+                }, 
+                error: false, 
+                message: "success" 
+            });
         } catch (error) {
-            
+            this.errorService.handleErrorResponse(error)(res);                 
         }
     }
 
@@ -138,6 +243,7 @@ export class TransactionService implements ITransactionService {
                 storyId,       
                 status: "initiated",          
                 type: payload.type,          
+                narration: payload.narration,
                 amount: payload.amount,    
                 currency: payload.currency,
                 deposit_address: payload.deposit_address,      
@@ -170,7 +276,7 @@ export class TransactionService implements ITransactionService {
                         status: "completed"
                     }
                 });
-                return { status, updatedTransaction};
+                return updatedTransaction;
             } else {
                 return null;
             }

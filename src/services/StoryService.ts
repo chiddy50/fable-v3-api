@@ -95,6 +95,7 @@ export class StoryService implements IStoryService {
             currentStepUrl, 
             currentPlotStep,
             introductionStep,
+            setting,
             suggestedCharacters,
             storyStarter, 
             writeFromScratch,
@@ -118,8 +119,7 @@ export class StoryService implements IStoryService {
             addWhoDoesNotHaveProtagonistGoal,
             addProtagonistGoalObstacle,
         } = req.body;
-        console.log({ storyId, addWhoDoesNotHaveProtagonistGoal });
-
+        
         try {
             const user: IJwtPayload = req.user as IJwtPayload;    
 
@@ -152,7 +152,9 @@ export class StoryService implements IStoryService {
                     }),
                     ...(introductionStep && {
                         introductionStep: introductionStep
-                    }),                    
+                    }),   
+                    ...(setting && { setting }),
+                 
                     ...(writeFromScratch && {
                         genre: writeFromScratch.genre,
                         genres: writeFromScratch.genres,
@@ -330,7 +332,7 @@ export class StoryService implements IStoryService {
         req: CustomRequest,
         res: Response
     ): Promise<void> => {
-        const { projectTitle } = req.body;
+        const { projectTitle, projectDescription } = req.body;
 
         try {
             const user: IJwtPayload = req.user as IJwtPayload;   
@@ -342,6 +344,7 @@ export class StoryService implements IStoryService {
                     status: 'draft',    
                     type: 'from-scratch',          
                     projectTitle,
+                    projectDescription,
                     currentPlotStep: 1                                               
                 }
             }) as Story;

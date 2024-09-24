@@ -22,6 +22,7 @@ model User {
   primaryWalletAddress String?
   createdAt            DateTime  @default(now())
   stories              Story[]
+  transactions         Transaction[]
 }
 
 model Story {
@@ -50,6 +51,9 @@ model Story {
   thematicOptions               Json?
   suspenseTechnique             Json?
   suspenseTechniqueDescription  String?
+
+  paidAt                        DateTime?
+  isPaid                        Boolean? @default(false)
 
   publicId                      String?  @unique
   metaData                      Json?
@@ -97,6 +101,17 @@ model StoryStructure {
 
   introductionTone              Json?
   introductionToneSuggestions   Json?
+
+  // STORY GENERATION ELEMENTS START
+  introduceProtagonistAndOrdinaryWorld String?
+  incitingIncident            String?
+  firstPlotPoint  String?
+  risingActionAndMidpoint String?
+  pinchPointsAndSecondPlotPoint String?
+  climaxAndFallingAction  String?
+  resolution  String?
+  // STORY GENERATION ELEMENTS END
+
 
   antagonists                  Json?
   antagonistSuggestions        Json?
@@ -208,7 +223,7 @@ model Character {
   howCharacterHasGrown                  Json?
 
   howCharactersGoalsAndPrioritiesChangedSuggestions   Json?
-  howCharactersGoalsAndPrioritiesChanged              Json?
+  howCharactersGoalsAndPrioritiesChanged    Json?
 
   unresolvedIssuesFromDepartureSuggestions  Json?
   unresolvedIssuesFromDeparture   Json?
@@ -219,6 +234,13 @@ model Character {
   strengthsSuggestions              Json?
   weaknessesSuggestions             Json?
 
+  height                            String?
+  weight                            String?
+
+  hairTexture                      String?
+  hairLength                       String?
+  hairQuirk                        String?
+  facialHair                       String?
 
   age                                       String?
   skinTone                                  String?
@@ -251,10 +273,17 @@ model Character {
 model Transaction {
   id                String   @id @default(cuid())
   storyId           String
+  userId            String
   reference         String  @unique
-  key               String  @unique
+  key               String  @unique // intentId or clientSecret
   unique_id         String  @unique
   deposit_address   String
+
+  locale            String?
+  mode              String?
+  narration         String?
+  confirmedAt       DateTime? 
+
   type              String // create-story, read-story
   status            String //initiated, pending, completed, failed, abandoned
   amount            String
@@ -263,6 +292,7 @@ model Transaction {
 
   // image Image?
   story Story  @relation(fields: [storyId], references: [id], onDelete: Cascade)
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
 }
 
 

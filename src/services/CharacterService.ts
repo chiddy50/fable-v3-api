@@ -128,6 +128,7 @@ export class CharacterService implements ICharacterService {
                 whoDoesNotHaveProtagonistGoalSuggestions,
                 whoDoesNotHaveProtagonistGoal,
 
+                protagonistGoalObstacle,
                 protagonistGoalObstacleSuggestions,
 
                 motivationsSuggestions,            
@@ -136,11 +137,21 @@ export class CharacterService implements ICharacterService {
                 strengthsSuggestions,              
                 weaknessesSuggestions,             
 
+                height,                            
+                weight,                            
+              
+                hairTexture,                      
+                hairLength,                       
+                hairQuirk,                        
+                facialHair,
+
                 strengths,
                 weaknesses,
                 skills,
                 motivations,
                 personalityTraits,
+
+
                 isProtagonist,
                 protagonistGoalMotivationSuggestions,
                 relationshipToProtagonist,
@@ -170,12 +181,21 @@ export class CharacterService implements ICharacterService {
                     ...(whoDoesNotHaveProtagonistGoalSuggestions && { whoDoesNotHaveProtagonistGoalSuggestions }),        
                     ...(whoDoesNotHaveProtagonistGoal && { whoDoesNotHaveProtagonistGoal }),        
                     ...(protagonistGoalObstacleSuggestions && { protagonistGoalObstacleSuggestions }),        
+                    ...(protagonistGoalObstacle && { protagonistGoalObstacle }),        
                     
                     ...(motivationsSuggestions && { motivationsSuggestions }),            
                     ...(personalityTraitsSuggestions && { personalityTraitsSuggestions }),      
                     ...(skillsSuggestions && { skillsSuggestions }),                 
                     ...(strengthsSuggestions && { strengthsSuggestions }),              
                     ...(weaknessesSuggestions && { weaknessesSuggestions }),
+
+                    ...(height && { height }),                            
+                    ...(weight && { weight }),                            
+                  
+                    ...(hairTexture && { hairTexture }),                      
+                    ...(hairLength && { hairLength }),                       
+                    ...(hairQuirk && { hairQuirk }),
+                    ...(facialHair && { facialHair }),                    
 
                     ...(strengths && { strengths }),
                     ...(weaknesses && { weaknesses }),

@@ -1,5 +1,5 @@
 import express, { Router, Request, Response } from "express";
-import { storyServiceFactory } from "../factories/StoryServiceFactory";
+import { storyServiceFactory, storyStructureService } from "../factories/StoryServiceFactory";
 import { middlewareServiceFactory } from "../factories/MiddleServiceFactory";
 
 const StoryController: Router = express.Router();
@@ -15,6 +15,14 @@ StoryController.post(
     middlewareServiceFactory.verifyToken,
     storyServiceFactory.createStoryFromScratch
 );
+
+StoryController.put(
+    "/structure/:id", 
+    middlewareServiceFactory.verifyToken,
+    storyStructureService.editStoryStructure
+);
+
+
 
 StoryController.put(
     "/build-from-scratch/:id", 

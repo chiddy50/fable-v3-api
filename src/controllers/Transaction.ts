@@ -16,9 +16,30 @@ TransactionController.post(
     transactionServiceFactory.verifyIntent
 );
 
-TransactionController.put(
+TransactionController.post(
+    "/confirm/:id", 
+    middlewareServiceFactory.verifyToken,
+    transactionServiceFactory.confirmTransaction
+);
+
+TransactionController.post(
+    "/", 
+    middlewareServiceFactory.verifyToken,
+    transactionServiceFactory.confirmTransaction
+);
+
+TransactionController.delete(
+    "/:id", 
+    middlewareServiceFactory.verifyToken,
+    transactionServiceFactory.deleteTransaction
+);
+
+
+TransactionController.post(
     "/webhook", 
     transactionServiceFactory.webhook
 );
+
+
 
 export default TransactionController;
