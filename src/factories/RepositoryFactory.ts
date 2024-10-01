@@ -8,6 +8,7 @@ import { SceneRepository } from "../repositories/SceneRepository";
 import { PlotSuggestionRepository } from "../repositories/PlotSuggestionRepository";
 import { StoryStructureRepository } from "../repositories/StoryStructureRepository";
 import { TransactionRepository } from "../repositories/TransactionRepository";
+import { StoryAccessRepository } from "../repositories/StoryAccessRepository";
 
 const prisma: any = new PrismaClient();
 
@@ -20,3 +21,4 @@ export const sceneRepository = new SceneRepository(prisma);
 export const plotSuggestionRepository = new PlotSuggestionRepository(prisma);
 export const storyStructureRepository = new StoryStructureRepository(prisma);
 export const transactionRepository = new TransactionRepository(prisma);
+export const storyAccessRepository = new StoryAccessRepository(prisma);

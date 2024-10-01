@@ -34,7 +34,11 @@ export class TransactionService implements ITransactionService {
     ): Promise<void> => {
 
         const { id } = req.params;
-        const { narration } = req.body;
+        const { narration, type } = req.body;
+
+        const user: IJwtPayload = req.user as IJwtPayload; 
+        
+        if (!user?.id) throw new Error("User Not Found");        
 
         const storyId = id;
         const amount = 0.05;
@@ -57,22 +61,23 @@ export class TransactionService implements ITransactionService {
 
             // Save transaction record
             let transaction = await this.createTransaction(storyId, {
-                type: "create-story",
+                type,
                 amount: amount.toString(),
                 currency,
                 narration,
                 deposit_address,
                 clientSecret: clientSecret.toString(),
+                userId: user?.id,
                 id: id.toString(),
             });
 
-            const { success, message } = await code.webhook.register({
-                intent: id,
-                // url: process.env.WEBHOOK_URL ?? "",
-                url: "https://tions-put-teaching-qty.trycloudflare.com/transactions/webhook"
-            });
+            // const { success, message } = await code.webhook.register({
+            //     intent: id,
+            //     // url: process.env.WEBHOOK_URL ?? "",
+            //     url: "https://quick-knowing-downtown-flow.trycloudflare.com"
+            // });
         
-            console.log('Registered webhook', success, message);
+            // console.log('Registered webhook', success, message);
 
             res.status(200).json({ 
                 data: { 
@@ -242,6 +247,7 @@ export class TransactionService implements ITransactionService {
             data: {
                 storyId,       
                 status: "initiated",          
+                userId: payload.userId,
                 type: payload.type,          
                 narration: payload.narration,
                 amount: payload.amount,    

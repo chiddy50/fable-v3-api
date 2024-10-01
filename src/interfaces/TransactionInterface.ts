@@ -5,5 +5,6 @@ export interface CreateTransactionInterface {
     currency: string;
     deposit_address: string;
     clientSecret: string;
+    userId: string;
     id: string;
 }
