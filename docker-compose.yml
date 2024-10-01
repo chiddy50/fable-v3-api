@@ -4,7 +4,7 @@ services:
   node-api:
     build: .
     ports:
-      - "3001:3001"
+      - "3300:3300"
     env_file:
       - .env
     depends_on:
