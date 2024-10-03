@@ -16,6 +16,7 @@ RUN npm install
 COPY . .
 
 RUN npm run build
+RUN prisma migrate reset
 RUN prisma generate
 RUN prisma db push
 
