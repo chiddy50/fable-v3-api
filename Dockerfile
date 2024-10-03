@@ -1,5 +1,5 @@
 # Use the official Node.js image as base
-FROM node:18.18.0
+FROM node:18
 
 RUN npm install -g prisma
 
@@ -17,6 +17,7 @@ COPY . .
 
 RUN npm run build
 RUN prisma generate
+RUN prisma db push
 
 # Expose the port that your app runs on
 EXPOSE 3300
