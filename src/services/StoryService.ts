@@ -130,9 +130,11 @@ export class StoryService implements IStoryService {
             currentStepUrl, 
             currentPlotStep,
             introductionStep,
-            
             writingStep,
-
+            projectTitle,
+            projectDescription,
+            status,
+            publishedAt,
             
             // INTRODUCTION
             introductionTone,
@@ -199,6 +201,15 @@ export class StoryService implements IStoryService {
             resolutionExtraDetails,
             resolutionLocked,
 
+            // IMAGES
+            introductionImage,
+            incitingIncidentImage,
+            firstPlotPointImage,
+            risingActionAndMidpointImage,
+            pinchPointsAndSecondPlotPointImage,
+            climaxAndFallingActionImage,           
+            resolutionImage,
+
             setting,
             storyStarter, 
             writeFromScratch,
@@ -252,6 +263,9 @@ export class StoryService implements IStoryService {
                     userId: user?.id,   
                 },
                 data: {
+                    ...(projectTitle && { projectTitle: projectTitle }),
+                    ...(projectDescription && { projectDescription: projectDescription }),
+
                     ...(currentStep && {
                         currentStep: currentStep
                     }),
@@ -264,8 +278,20 @@ export class StoryService implements IStoryService {
                     ...(introductionStep && {
                         introductionStep: introductionStep
                     }),   
+
+                    ...(status && { status: status }),
+                    ...(publishedAt && { publishedAt: publishedAt }),
                     
                     ...(writingStep && { writingStep: writingStep }),
+
+                    // IMAGES
+                    ...(introductionImage && { introductionImage: introductionImage }),
+                    ...(incitingIncidentImage && { incitingIncidentImage: incitingIncidentImage }),
+                    ...(firstPlotPointImage && { firstPlotPointImage: firstPlotPointImage }),
+                    ...(risingActionAndMidpointImage && { risingActionAndMidpointImage: risingActionAndMidpointImage }),
+                    ...(pinchPointsAndSecondPlotPointImage && { pinchPointsAndSecondPlotPointImage: pinchPointsAndSecondPlotPointImage }),
+                    ...(climaxAndFallingActionImage && { climaxAndFallingActionImage: climaxAndFallingActionImage }),           
+                    ...(resolutionImage && { resolutionImage: resolutionImage }),
 
                     // INTRODUCTION
                     ...(introductionLocked && { introductionLocked: introductionLocked }),
@@ -788,15 +814,19 @@ export class StoryService implements IStoryService {
         }
     }
 
-    public getStoryFromScratch = async (req: Request, res: Response): Promise<void> => {
+    public getStoryFromScratch = async (req: CustomRequest, res: Response): Promise<void> => {
         try {
             const { id } = req.params;
-        
+            
             if (!id) throw new Error("Invalid id");
-        
+            const user: IJwtPayload = req.user as IJwtPayload; 
+            const email = user?.email;
+            const authUser = await this.userRepo.getUnique({ where: { email } }) as User | null;
+
             const story: any = await this.storyRepo.get({
                 where: {
-                    id: id
+                    id: id,
+                    userId: authUser?.id
                 },
                 include: {
                     characters: true,

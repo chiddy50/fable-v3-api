@@ -65,6 +65,8 @@ model Story {
   introductionSetting           Json?
   protagonistSuggestions        Json?
   suggestedCharacters           Json?
+    introductionImage              String?
+
 
   // INCITING INCIDENT
   incitingIncidentLocked        Boolean? @default(false)
@@ -74,6 +76,7 @@ model Story {
   incitingIncidentTone  Json?
   incitingIncidentSetting Json?
   incitingIncidentExtraDetails String?
+  incitingIncidentImage              String?
 
   // FIRST PLOT POINT
   firstPlotPointLocked  Boolean? @default(false) 
@@ -83,6 +86,7 @@ model Story {
   firstPlotPointCharacters  Json?
   firstPlotPointSetting  Json?
   firstPlotPointTone  Json?
+  firstPlotPointImage String?
 
   // RISING ACTION & MIDPOINT
   challengesProtagonistFaces   String?                     
@@ -93,6 +97,8 @@ model Story {
   risingActionAndMidpointTone  Json?
   risingActionAndMidpointExtraDetails  String?
   risingActionAndMidpointLocked Boolean? @default(false)
+  risingActionAndMidpointImage  String?
+
 
   // PINCH POINT & SECOND PLOT POINT
   newObstacles   String?                     
@@ -103,6 +109,7 @@ model Story {
   pinchPointsAndSecondPlotPointTone  Json?
   pinchPointsAndSecondPlotPointExtraDetails  String?
   pinchPointsAndSecondPlotPointLocked Boolean? @default(false)
+  pinchPointsAndSecondPlotPointImage  String?
 
   // CLIMAX AND FALLING ACTION
   finalChallenge  String?
@@ -112,6 +119,7 @@ model Story {
   climaxAndFallingActionTone Json?
   climaxAndFallingActionExtraDetails Json?
   climaxAndFallingActionLocked Boolean? @default(false)
+  climaxAndFallingActionImage String?
 
   // RESOLUTION
   climaxConsequences String?
@@ -122,8 +130,9 @@ model Story {
   resolutionTone Json?
   resolutionExtraDetails Json?
   resolutionLocked Boolean? @default(false)
-                
-  
+  resolutionImage String?
+
+
 
 
   paidAt                        DateTime?

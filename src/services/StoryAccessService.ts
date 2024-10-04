@@ -1,4 +1,4 @@
-import { where } from "ramda";
+import { includes, where } from "ramda";
 import { IBase } from "../repositories/BaseRepository";
 import { IAuth } from "../shared/AuthService";
 import { IErrorService } from "../shared/ErrorService";
@@ -35,10 +35,15 @@ export class StoryAccessService implements IStoryAccessService {
             const story: any = await this.storyRepo.get({
                 where: {
                     id
+                },
+                include: {
+                    user: true
                 }
             });
             if (!story) throw new Error("Story not found");
-    
+
+            const depositAddress = story?.user?.depositAddress;
+            
             const email = user?.email;
             const reader = await this.userRepo.getUnique({ where: { email } }) as User | null;
             if (!reader) throw new Error("Unidentified User");
@@ -84,6 +89,7 @@ export class StoryAccessService implements IStoryAccessService {
 
                 res.status(200).json({ 
                     accessRecord: storyAccess,
+                    depositAddress,
                     story: response, 
                     error: false, 
                     message: "success" 
@@ -98,6 +104,7 @@ export class StoryAccessService implements IStoryAccessService {
                     res.status(200).json({ 
                         accessRecord,
                         story: response, 
+                        depositAddress,
                         error: false, 
                         message: "success" 
                     });
@@ -109,6 +116,7 @@ export class StoryAccessService implements IStoryAccessService {
                     res.status(200).json({ 
                         accessRecord,
                         story: response, 
+                        depositAddress,
                         error: false, 
                         message: "success" 
                     });
@@ -186,6 +194,8 @@ export class StoryAccessService implements IStoryAccessService {
                 projectDescription: true,
                 genres: true,
                 publishedAt: true,
+                introductionImage: true,
+                incitingIncidentImage: true,              
                 user: {
                     select: {
                         id: true,
@@ -217,6 +227,13 @@ export class StoryAccessService implements IStoryAccessService {
                 projectDescription: true,
                 genres: true,
                 publishedAt: true,
+                introductionImage: true,
+                incitingIncidentImage: true,
+                firstPlotPointImage: true,
+                risingActionAndMidpointImage: true,
+                pinchPointsAndSecondPlotPointImage: true,
+                climaxAndFallingActionImage: true,           
+                resolutionImage: true,
                 user: {
                     select: {
                         id: true,
