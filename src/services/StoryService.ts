@@ -42,6 +42,7 @@ export class StoryService implements IStoryService {
                     userId: true,
                     projectTitle: true,
                     projectDescription: true,
+                    introductionImage: true,
                     genres: true,
                     publishedAt: true,
                     user: {
