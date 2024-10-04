@@ -6,6 +6,7 @@ import UserController from "./controllers/User";
 import StoryController from "./controllers/Story";
 import CharacterController from "./controllers/Character";
 import TransactionController from "./controllers/Transaction";
+import StoryAccessController from "./controllers/StoryAccess";
 
 dotenv.config();
 
@@ -19,6 +20,7 @@ app.use("/users", UserController);
 app.use("/stories", StoryController);
 app.use("/characters", CharacterController);
 app.use("/transactions", TransactionController);
+app.use("/story-access", StoryAccessController);
 
 
 app.listen(port, () => {

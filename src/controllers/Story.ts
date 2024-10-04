@@ -4,6 +4,12 @@ import { middlewareServiceFactory } from "../factories/MiddleServiceFactory";
 
 const StoryController: Router = express.Router();
 
+
+StoryController.get(
+    "/all", 
+    storyServiceFactory.getPublicStories
+);
+
 StoryController.post(
     "/", 
     middlewareServiceFactory.verifyToken,
@@ -66,5 +72,14 @@ StoryController.get(
     middlewareServiceFactory.verifyToken,
     storyServiceFactory.getStoryScene
 );
+
+StoryController.get(
+    "/read/:id", 
+    middlewareServiceFactory.verifyToken,
+    storyServiceFactory.readStory
+);
+
+
+
 
 export default StoryController;

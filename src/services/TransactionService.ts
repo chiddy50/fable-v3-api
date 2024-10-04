@@ -2,7 +2,7 @@ import { IBase } from "../repositories/BaseRepository";
 import { IAuth } from "../shared/AuthService";
 import { IErrorService } from "../shared/ErrorService";
 import { Response, Request } from "express";
-import { Character, CustomRequest, IJwtPayload, Image, Page, Scene, Story } from "../shared/Interface";
+import { Character, CustomRequest, IJwtPayload, Image, Page, Scene, Story, User } from "../shared/Interface";
 import { slugify } from "../shared/helpers";
 import { PublicKey } from "@code-wallet/keys";
 import * as code from "@code-wallet/client";
@@ -21,6 +21,8 @@ export class TransactionService implements ITransactionService {
 
     constructor(        
         private transactionRepo: IBase,
+        private storyAccessRepo: IBase,    
+        private userRepo: IBase,                
         private storyRepo: IBase,
         private characterRepo: IBase,
         private storyStructureRepo: IBase,        
@@ -34,13 +36,18 @@ export class TransactionService implements ITransactionService {
     ): Promise<void> => {
 
         const { id } = req.params;
-        const { narration } = req.body;
+        const { narration, type, depositAddress } = req.body;
+
+        const user: IJwtPayload = req.user as IJwtPayload; 
+        
+        if (!user?.id) throw new Error("User Not Found");        
+        if (type === "read-story" && !depositAddress) throw new Error("No deposit address found");        
 
         const storyId = id;
         const amount = 0.05;
         const currency = 'usd';
 
-        const deposit_address = process.env.CODE_WALLET_DEPOSIT_ADDRESS ?? "";
+        const deposit_address = type === "create-story" ? process.env.CODE_WALLET_DEPOSIT_ADDRESS : depositAddress;
 
         try {
             const { clientSecret, id } = await code.paymentIntents.create({
@@ -57,22 +64,23 @@ export class TransactionService implements ITransactionService {
 
             // Save transaction record
             let transaction = await this.createTransaction(storyId, {
-                type: "create-story",
+                type,
                 amount: amount.toString(),
                 currency,
                 narration,
                 deposit_address,
                 clientSecret: clientSecret.toString(),
+                userId: user?.id,
                 id: id.toString(),
             });
 
-            const { success, message } = await code.webhook.register({
-                intent: id,
-                // url: process.env.WEBHOOK_URL ?? "",
-                url: "https://tions-put-teaching-qty.trycloudflare.com/transactions/webhook"
-            });
+            // const { success, message } = await code.webhook.register({
+            //     intent: id,
+            //     // url: process.env.WEBHOOK_URL ?? "",
+            //     url: "https://quick-knowing-downtown-flow.trycloudflare.com"
+            // });
         
-            console.log('Registered webhook', success, message);
+            // console.log('Registered webhook', success, message);
 
             res.status(200).json({ 
                 data: { 
@@ -122,8 +130,10 @@ export class TransactionService implements ITransactionService {
     ): Promise<void> => {
         try {
             const { id } = req.params;
-            const { storyId, clientSecret, destination, locale, mode } = req.body;
+            const { storyId, clientSecret, destination, locale, mode, type } = req.body;
             const user: IJwtPayload = req.user as IJwtPayload;    
+            const email = user?.email;
+            const authUser = await this.userRepo.getUnique({ where: { email } }) as User | null;
 
             const transaction: any = await this.transactionRepo.get({
                 where: { 
@@ -153,21 +163,39 @@ export class TransactionService implements ITransactionService {
                 }
             });
 
-            const updateStory: any = await this.storyRepo.update({
-                where: { 
-                    id: storyId,
-                    userId: user?.id,   
-                },
-                data: {
-                    paidAt: new Date(),
-                    isPaid: true
-                }
-            });
+            if (updatedTransaction?.type === "create-story") {                
+                const updateStory: any = await this.storyRepo.update({
+                    where: { 
+                        id: storyId,
+                        userId: user?.id,   
+                    },
+                    data: {
+                        paidAt: new Date(),
+                        isPaid: true
+                    }
+                });
+            }
+
+            if (type === "read-story") {                
+                const storyAccess = await this.storyAccessRepo.update({ 
+                    where: { 
+                        userId_storyId: {
+                            storyId: storyId,
+                            userId: user?.id,  
+                        },
+                        // id: storyId,
+                        // userId: user?.id,   
+                    },
+                    data: {
+                        hasAccess: true
+                    }
+                });
+            }
 
             res.status(200).json({ 
                 data: { 
                     transaction: updatedTransaction,
-                    story: updateStory
+                    // story: updateStory
                 }, 
                 error: false, 
                 message: "success" 
@@ -237,11 +265,37 @@ export class TransactionService implements ITransactionService {
         }
     }
 
+    public getTransactions = async (
+        req: CustomRequest,
+        res: Response
+    ): Promise<void> => {
+        try {
+            const user: IJwtPayload = req.user as IJwtPayload;         
+            if (!user?.id) throw new Error("User Not Found"); 
+            
+            const transactions = await this.transactionRepo.getAll({ 
+                where: {
+                    userId: user?.id
+                }
+            });
+
+            res.status(200).json({ 
+                transactions,
+                error: false, 
+                message: "success" 
+            });
+        } catch (error) {
+            console.error(error);
+            this.errorService.handleErrorResponse(error)(res); 
+        }
+    }
+
     createTransaction = async(storyId: string, payload: CreateTransactionInterface) => {
         const transaction = await this.transactionRepo.create({ 
             data: {
                 storyId,       
                 status: "initiated",          
+                userId: payload.userId,
                 type: payload.type,          
                 narration: payload.narration,
                 amount: payload.amount,    

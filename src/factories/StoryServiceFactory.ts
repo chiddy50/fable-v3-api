@@ -1,5 +1,6 @@
 import { StoryService } from "../services/StoryService";
 import { StoryStructureService } from "../services/StoryStructureService";
+import { StoryAccessService } from "../services/StoryAccessService";
 import { authService } from "./AuthServiceFactory";
 import { errorService } from "./ErrorServiceFactory";
 import {
@@ -9,17 +10,22 @@ import {
   characterRepository,
   sceneRepository,
   plotSuggestionRepository,
-  storyStructureRepository
+  storyStructureRepository,
+  transactionRepository,
+  storyAccessRepository, 
+  userRepository
 } from "./RepositoryFactory";
 
 export const storyServiceFactory = new StoryService(
   storyRepository,
+  userRepository,
   pageRepository,
   imageRepository,
   characterRepository,
   sceneRepository,
   plotSuggestionRepository,
   storyStructureRepository,
+  transactionRepository,
   authService,
   errorService
 );
@@ -31,4 +37,12 @@ export const storyStructureService = new StoryStructureService(
   errorService
 )
 
-
+export const storyAccessService = new StoryAccessService(
+  storyAccessRepository,
+  userRepository,
+  storyRepository,
+  storyStructureRepository,
+  transactionRepository,
+  authService,
+  errorService
+)

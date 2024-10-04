@@ -118,9 +118,14 @@ export class CharacterService implements ICharacterService {
 
             const {
                 storyId,
+
+                suggestedCharacters,
+
                 introductionStep,
                 confrontationStep,
                 resolutionStep,
+
+                coreValues,
 
                 whatTheyWant,
                 whoHasIt,
@@ -135,7 +140,9 @@ export class CharacterService implements ICharacterService {
                 personalityTraitsSuggestions,      
                 skillsSuggestions,                 
                 strengthsSuggestions,              
-                weaknessesSuggestions,             
+                weaknessesSuggestions,  
+                coreValueSuggestions,
+                conflictAndAngstSuggestions,
 
                 height,                            
                 weight,                            
@@ -144,6 +151,7 @@ export class CharacterService implements ICharacterService {
                 hairLength,                       
                 hairQuirk,                        
                 facialHair,
+                extraDescription,
 
                 strengths,
                 weaknesses,
@@ -183,11 +191,15 @@ export class CharacterService implements ICharacterService {
                     ...(protagonistGoalObstacleSuggestions && { protagonistGoalObstacleSuggestions }),        
                     ...(protagonistGoalObstacle && { protagonistGoalObstacle }),        
                     
+                    ...(coreValues && { coreValues }),        
+                    
                     ...(motivationsSuggestions && { motivationsSuggestions }),            
                     ...(personalityTraitsSuggestions && { personalityTraitsSuggestions }),      
                     ...(skillsSuggestions && { skillsSuggestions }),                 
                     ...(strengthsSuggestions && { strengthsSuggestions }),              
                     ...(weaknessesSuggestions && { weaknessesSuggestions }),
+                    ...(coreValueSuggestions && { coreValueSuggestions }),
+                    ...(conflictAndAngstSuggestions && { conflictAndAngstSuggestions }),
 
                     ...(height && { height }),                            
                     ...(weight && { weight }),                            
@@ -195,7 +207,8 @@ export class CharacterService implements ICharacterService {
                     ...(hairTexture && { hairTexture }),                      
                     ...(hairLength && { hairLength }),                       
                     ...(hairQuirk && { hairQuirk }),
-                    ...(facialHair && { facialHair }),                    
+                    ...(facialHair && { facialHair }),   
+                    ...(extraDescription && { extraDescription }),                                        
 
                     ...(strengths && { strengths }),
                     ...(weaknesses && { weaknesses }),
@@ -221,7 +234,7 @@ export class CharacterService implements ICharacterService {
                 }
             });
 
-            if (introductionStep || confrontationStep || resolutionStep) {                
+            if (introductionStep || confrontationStep || resolutionStep || suggestedCharacters) {                
                 const updateStory: any = await this.storyRepo.update({
                     where: { 
                         id: storyId,
@@ -230,7 +243,8 @@ export class CharacterService implements ICharacterService {
                     data: {
                         ...(introductionStep && { introductionStep }),
                         ...(confrontationStep && { confrontationStep }),
-                        ...(resolutionStep && { resolutionStep }),                        
+                        ...(resolutionStep && { resolutionStep }),      
+                        ...(suggestedCharacters && { suggestedCharacters }),                                               
                     }
                 });
                 console.log({updateStory});

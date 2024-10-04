@@ -10,6 +10,13 @@ TransactionController.post(
     transactionServiceFactory.createIntent
 );
 
+TransactionController.get(
+    "/user", 
+    middlewareServiceFactory.verifyToken,
+    transactionServiceFactory.getTransactions
+);
+
+
 TransactionController.post(
     "/verify/:id", 
     middlewareServiceFactory.verifyToken,

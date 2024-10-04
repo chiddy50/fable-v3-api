@@ -2,7 +2,7 @@ import { IBase } from "../repositories/BaseRepository";
 import { IAuth } from "../shared/AuthService";
 import { IErrorService } from "../shared/ErrorService";
 import { Response, Request } from "express";
-import { Character, CustomRequest, IJwtPayload, Image, Page, Scene, Story } from "../shared/Interface";
+import { Character, CustomRequest, IJwtPayload, Image, Page, Scene, Story, User } from "../shared/Interface";
 import { slugify } from "../shared/helpers";
 
 const _ = require('lodash');
@@ -11,21 +11,56 @@ export interface IStoryService {
     create(req: Request, res: Response): Promise<void>; 
     getStoryScene(req: Request, res: Response): Promise<void>; 
     getStoryScenes(req: Request, res: Response): Promise<void>; 
+    getPublicStories(req: Request, res: Response): Promise<void>;     
 }
 
 export class StoryService implements IStoryService {
 
     constructor(
         private storyRepo: IBase,
+        private userRepo: IBase,
         private pageRepo: IBase,
         private imageRepo: IBase,
         private characterRepo: IBase,
         private sceneRepo: IBase,
         private plotSuggestionRepo: IBase,
-        private storyStructureRepo: IBase,        
+        private storyStructureRepo: IBase,     
+        private transactionRepo: IBase,     
         private authService: IAuth,
         private errorService: IErrorService
     ) {}
+
+    public getPublicStories = async (req: Request, res: Response): Promise<void> => {
+        try {
+
+            const stories: any = await this.storyRepo.getAll({
+                // where: {
+                //     status: "published"
+                // },
+                select: {
+                    id: true,
+                    userId: true,
+                    projectTitle: true,
+                    projectDescription: true,
+                    genres: true,
+                    publishedAt: true,
+                    user: {
+                        select: {
+                            id: true,
+                            name: true,
+                            email: true
+                        }
+                    }
+                }
+            });
+
+            res.status(200).json({ stories, error: false, message: "success" });
+
+        } catch (error) {
+            this.errorService.handleErrorResponse(error)(res);            
+        }
+    }
+    
 
     public create = async (
         req: CustomRequest,
@@ -95,8 +130,87 @@ export class StoryService implements IStoryService {
             currentStepUrl, 
             currentPlotStep,
             introductionStep,
-            setting,
+            writingStep,
+            projectTitle,
+            projectDescription,
+            status,
+            publishedAt,
+            
+            // INTRODUCTION
+            introductionTone,
+            genres,
+            introductionSetting,
+            protagonistSuggestions,
             suggestedCharacters,
+            introductionLocked,
+            
+            // INCITING EVENT
+            typeOfEvent,                    
+            causeOfTheEvent,                    
+            stakesAndConsequences,                    
+            incitingIncidentSetting,                    
+            incitingIncidentTone,  
+            incitingIncidentExtraDetails,
+            incitingIncidentLocked,
+
+            // FIRST PLOT POINT
+            protagonistGoal,
+            protagonistTriggerToAction,
+            obstaclesProtagonistWillFace,
+            firstPlotPointCharacters,
+            firstPlotPointSetting,
+            firstPlotPointTone,
+            firstPlotLocked,
+            firstPlotPointExtraDetails,
+
+            // RISING ACTION & MIDPOINT            
+            challengesProtagonistFaces,
+            protagonistPerspectiveChange,
+            majorEventPropellingClimax,
+            risingActionAndMidpointCharacters,
+            risingActionAndMidpointSetting,
+            risingActionAndMidpointTone,
+            risingActionAndMidpointExtraDetails,
+            risingActionAndMidpointLocked,
+
+            // PINCH POINTS AND SECOND PLOT POINT
+            newObstacles,
+            discoveryChanges,
+            howStakesEscalate,
+            pinchPointsAndSecondPlotPointCharacters,
+            pinchPointsAndSecondPlotPointSetting,
+            pinchPointsAndSecondPlotPointTone,
+            pinchPointsAndSecondPlotPointExtraDetails,
+            pinchPointsAndSecondPlotPointLocked,
+
+            // CLIMAX & FALLING ACTION
+            finalChallenge,  
+            challengeOutcome, 
+            storyResolution, 
+            climaxAndFallingActionSetting,
+            climaxAndFallingActionTone,
+            climaxAndFallingActionExtraDetails,
+            climaxAndFallingActionLocked,
+
+            // RESOLUTION
+            climaxConsequences,
+            howCharactersEvolve,
+            resolutionOfConflict,
+            resolutionSetting,
+            resolutionTone,
+            resolutionExtraDetails,
+            resolutionLocked,
+
+            // IMAGES
+            introductionImage,
+            incitingIncidentImage,
+            firstPlotPointImage,
+            risingActionAndMidpointImage,
+            pinchPointsAndSecondPlotPointImage,
+            climaxAndFallingActionImage,           
+            resolutionImage,
+
+            setting,
             storyStarter, 
             writeFromScratch,
             introductionSuggestions,
@@ -109,7 +223,7 @@ export class StoryService implements IStoryService {
             updateIncitingEvent,
             protagonistOrdinaryWorld,
             updateProtagonistOrdinaryWorld,
-            firstPlotPoint,
+
             updateFirstPlotPoint,
             progressiveComplication, // ACT 2
             updateProgressiveComplication,
@@ -118,8 +232,16 @@ export class StoryService implements IStoryService {
             addProtagonistGoal,
             addWhoDoesNotHaveProtagonistGoal,
             addProtagonistGoalObstacle,
+
+            introduceProtagonistAndOrdinaryWorld,
+            incitingIncident,
+            risingActionAndMidpoint,
+            firstPlotPoint,
+            pinchPointsAndSecondPlotPoint,
+            climaxAndFallingAction,
+            resolution,
         } = req.body;
-        
+
         try {
             const user: IJwtPayload = req.user as IJwtPayload;    
 
@@ -141,6 +263,9 @@ export class StoryService implements IStoryService {
                     userId: user?.id,   
                 },
                 data: {
+                    ...(projectTitle && { projectTitle: projectTitle }),
+                    ...(projectDescription && { projectDescription: projectDescription }),
+
                     ...(currentStep && {
                         currentStep: currentStep
                     }),
@@ -153,8 +278,88 @@ export class StoryService implements IStoryService {
                     ...(introductionStep && {
                         introductionStep: introductionStep
                     }),   
-                    ...(setting && { setting }),
-                 
+
+                    ...(status && { status: status }),
+                    ...(publishedAt && { publishedAt: publishedAt }),
+                    
+                    ...(writingStep && { writingStep: writingStep }),
+
+                    // IMAGES
+                    ...(introductionImage && { introductionImage: introductionImage }),
+                    ...(incitingIncidentImage && { incitingIncidentImage: incitingIncidentImage }),
+                    ...(firstPlotPointImage && { firstPlotPointImage: firstPlotPointImage }),
+                    ...(risingActionAndMidpointImage && { risingActionAndMidpointImage: risingActionAndMidpointImage }),
+                    ...(pinchPointsAndSecondPlotPointImage && { pinchPointsAndSecondPlotPointImage: pinchPointsAndSecondPlotPointImage }),
+                    ...(climaxAndFallingActionImage && { climaxAndFallingActionImage: climaxAndFallingActionImage }),           
+                    ...(resolutionImage && { resolutionImage: resolutionImage }),
+
+                    // INTRODUCTION
+                    ...(introductionLocked && { introductionLocked: introductionLocked }),
+                    ...(introductionTone && { introductionTone: introductionTone }),
+                    ...(genres && { genres: genres }),
+                    ...(introductionSetting && { introductionSetting: introductionSetting }),
+                    ...(protagonistSuggestions && { protagonistSuggestions: protagonistSuggestions }),
+                    ...(suggestedCharacters && { suggestedCharacters: suggestedCharacters }),
+                    ...(setting && { setting: setting }),
+
+                    // INCITING INCIDENT
+                    ...(typeOfEvent && { typeOfEvent: typeOfEvent }),                    
+                    ...(causeOfTheEvent && { causeOfTheEvent: causeOfTheEvent }),                    
+                    ...(stakesAndConsequences && { stakesAndConsequences: stakesAndConsequences }),                    
+                    ...(incitingIncidentSetting && { incitingIncidentSetting: incitingIncidentSetting }),                    
+                    ...(incitingIncidentTone && { incitingIncidentTone: incitingIncidentTone }),  
+                    ...(incitingIncidentExtraDetails && { incitingIncidentExtraDetails: incitingIncidentExtraDetails }),  
+                    ...(incitingIncidentLocked && { incitingIncidentLocked: incitingIncidentLocked }),  
+                    
+                    // FIRST PLOT POINT
+                    ...(protagonistGoal && { protagonistGoal: protagonistGoal } ),
+                    ...(protagonistTriggerToAction && { protagonistTriggerToAction: protagonistTriggerToAction } ),
+                    ...(obstaclesProtagonistWillFace && { obstaclesProtagonistWillFace: obstaclesProtagonistWillFace } ),
+                    ...(firstPlotPointCharacters && { firstPlotPointCharacters: firstPlotPointCharacters } ),
+                    ...(firstPlotPointSetting && { firstPlotPointSetting: firstPlotPointSetting } ),
+                    ...(firstPlotPointTone && { firstPlotPointTone: firstPlotPointTone } ),
+                    ...(firstPlotLocked && { firstPlotLocked: firstPlotLocked } ),
+                    ...(firstPlotPointExtraDetails && { firstPlotPointExtraDetails: firstPlotPointExtraDetails } ),
+
+                    // RISING ACTION & MIDPOINT
+                    ...(challengesProtagonistFaces && { challengesProtagonistFaces: challengesProtagonistFaces }),                       
+                    ...(protagonistPerspectiveChange && { protagonistPerspectiveChange: protagonistPerspectiveChange }),                       
+                    ...(majorEventPropellingClimax && { majorEventPropellingClimax: majorEventPropellingClimax }),                       
+                    ...(risingActionAndMidpointCharacters && { risingActionAndMidpointCharacters: risingActionAndMidpointCharacters }),                                                    
+                    ...(risingActionAndMidpointSetting && { risingActionAndMidpointSetting: risingActionAndMidpointSetting }),                      
+                    ...(risingActionAndMidpointTone && { risingActionAndMidpointTone: risingActionAndMidpointTone }), 
+                    ...(risingActionAndMidpointExtraDetails && { risingActionAndMidpointExtraDetails: risingActionAndMidpointExtraDetails }), 
+                    ...(risingActionAndMidpointLocked && { risingActionAndMidpointLocked: risingActionAndMidpointLocked }),
+
+                    // PINCH POINT & SECOND PLOT POINT
+                    ...(newObstacles && { newObstacles: newObstacles }),
+                    ...(discoveryChanges && { discoveryChanges: discoveryChanges }),
+                    ...(howStakesEscalate && { howStakesEscalate: howStakesEscalate }),
+                    ...(pinchPointsAndSecondPlotPointCharacters && { pinchPointsAndSecondPlotPointCharacters: pinchPointsAndSecondPlotPointCharacters }),
+                    ...(pinchPointsAndSecondPlotPointSetting && { pinchPointsAndSecondPlotPointSetting: pinchPointsAndSecondPlotPointSetting }),
+                    ...(pinchPointsAndSecondPlotPointTone && { pinchPointsAndSecondPlotPointTone: pinchPointsAndSecondPlotPointTone }),
+                    ...(pinchPointsAndSecondPlotPointExtraDetails && { pinchPointsAndSecondPlotPointExtraDetails: pinchPointsAndSecondPlotPointExtraDetails }),
+                    ...(pinchPointsAndSecondPlotPointLocked && { pinchPointsAndSecondPlotPointLocked: pinchPointsAndSecondPlotPointLocked }),
+
+                    // CLIMAX & FALLING ACTION
+                    ...(finalChallenge && { finalChallenge: finalChallenge }),
+                    ...(challengeOutcome && { challengeOutcome: challengeOutcome }),
+                    ...(storyResolution && { storyResolution: storyResolution }),
+                    ...(climaxAndFallingActionSetting && { climaxAndFallingActionSetting: climaxAndFallingActionSetting }),
+                    ...(climaxAndFallingActionTone && { climaxAndFallingActionTone: climaxAndFallingActionTone }),
+                    ...(climaxAndFallingActionExtraDetails && { climaxAndFallingActionExtraDetails: climaxAndFallingActionExtraDetails }),
+                    ...(climaxAndFallingActionLocked && { climaxAndFallingActionLocked: climaxAndFallingActionLocked }),
+
+                    // RESOLUTION
+                    ...(climaxConsequences && { climaxConsequences: climaxConsequences }),
+                    ...(howCharactersEvolve && { howCharactersEvolve: howCharactersEvolve }),
+                    ...(resolutionOfConflict && { resolutionOfConflict: resolutionOfConflict }),
+                    ...(resolutionSetting && { resolutionSetting: resolutionSetting }),
+                    ...(resolutionTone && { resolutionTone: resolutionTone }),
+                    ...(resolutionExtraDetails && { resolutionExtraDetails: resolutionExtraDetails }),
+                    ...(resolutionLocked && { resolutionLocked: resolutionLocked }),
+
+
                     ...(writeFromScratch && {
                         genre: writeFromScratch.genre,
                         genres: writeFromScratch.genres,
@@ -194,6 +399,14 @@ export class StoryService implements IStoryService {
             const storyStructure: any = await this.storyStructureRepo.update({
                 where: { storyId: id },
                 data: {
+                    ...(introduceProtagonistAndOrdinaryWorld && { introduceProtagonistAndOrdinaryWorld: introduceProtagonistAndOrdinaryWorld }),
+                    ...(incitingIncident && { incitingIncident: incitingIncident }),
+                    ...(firstPlotPoint && { firstPlotPoint: firstPlotPoint } ),
+                    ...(risingActionAndMidpoint && { risingActionAndMidpoint: risingActionAndMidpoint } ),
+                    ...(pinchPointsAndSecondPlotPoint && { pinchPointsAndSecondPlotPoint: pinchPointsAndSecondPlotPoint } ),
+                    ...(climaxAndFallingAction && { climaxAndFallingAction: climaxAndFallingAction } ),
+                    ...(resolution && { resolution: resolution } ),                    
+
                     ...(storyStarter && {
                         protagonistSuggestions: storyStarter.protagonistSuggestions,
                         settingSuggestions: storyStarter.settingSuggestions,
@@ -332,12 +545,16 @@ export class StoryService implements IStoryService {
         req: CustomRequest,
         res: Response
     ): Promise<void> => {
-        const { projectTitle, projectDescription } = req.body;
+        const { projectTitle, projectDescription, depositAddress } = req.body;
 
         try {
             const user: IJwtPayload = req.user as IJwtPayload;   
 
             if (!user?.id) throw new Error("User Not Found");
+            const email = user?.email;
+            const authUser = await this.userRepo.getUnique({ where: { email } }) as User | null;
+            if (!authUser?.id) throw new Error("User Not Found");
+
             const newStory = await this.storyRepo.create({ 
                 data: {
                     userId: user?.id,   
@@ -350,7 +567,17 @@ export class StoryService implements IStoryService {
             }) as Story;
 
             if (!newStory) throw new Error("Could not create new story project");
-        
+            
+            
+            const userUpdated = await this.userRepo.update({
+                where: { id: authUser?.id },
+                data: {
+                    depositAddress
+                } 
+            });
+            console.log(userUpdated);
+            
+
             const storyStructure = await this.storyStructureRepo.create({ 
                 data: {
                     storyId: newStory?.id                                       
@@ -587,15 +814,19 @@ export class StoryService implements IStoryService {
         }
     }
 
-    public getStoryFromScratch = async (req: Request, res: Response): Promise<void> => {
+    public getStoryFromScratch = async (req: CustomRequest, res: Response): Promise<void> => {
         try {
             const { id } = req.params;
-        
+            
             if (!id) throw new Error("Invalid id");
-        
+            const user: IJwtPayload = req.user as IJwtPayload; 
+            const email = user?.email;
+            const authUser = await this.userRepo.getUnique({ where: { email } }) as User | null;
+
             const story: any = await this.storyRepo.get({
                 where: {
-                    id: id
+                    id: id,
+                    userId: authUser?.id
                 },
                 include: {
                     characters: true,
@@ -614,6 +845,86 @@ export class StoryService implements IStoryService {
           this.errorService.handleErrorResponse(error)(res);
         }
     };
+
+    public readStory = async (req: CustomRequest, res: Response): Promise<void> => {
+        try {
+            const { id } = req.params;
+            if (!id) throw new Error("Invalid id");
+            const user: IJwtPayload = req.user as IJwtPayload;   
+
+            const transaction: any = await this.transactionRepo.get({
+                where: { 
+                    storyId: id, 
+                    userId: user?.id,
+                    type: "read-story"
+                },
+            });            
+
+            if (!transaction) {
+                const story: any = await this.storyRepo.get({
+                    where: {
+                        id: id
+                    },
+                    select: {
+                        id: true,
+                        userId: true,
+                        projectTitle: true,
+                        projectDescription: true,
+                        genres: true,
+                        publishedAt: true,
+                        user: {
+                            select: {
+                                id: true,
+                                name: true,
+                                email: true
+                            }
+                        },
+                        storyStructure: {
+                            select: { id: true, introduceProtagonistAndOrdinaryWorld: true },
+                        },
+                    }
+                });
+    
+                res.status(200).json({ story, error: false, message: "success" });
+                return;
+            }
+
+            if (transaction?.status === "completed") {
+                const story: any = await this.storyRepo.get({
+                    where: {
+                        id: id
+                    },
+                    include: {
+                        storyStructure: true,
+                        user: true
+                    }
+                });
+    
+                res.status(200).json({ story, error: false, message: "success" });
+                return;                
+            }else{
+                const story: any = await this.storyRepo.get({
+                    where: {
+                        id: id
+                    },
+                    include: {
+                        storyStructure: {
+                            select: { id: true, introduceProtagonistAndOrdinaryWorld: true },
+                        },
+                        user: true
+                    }
+                });
+    
+                res.status(200).json({ story, error: false, message: "success" });
+                return;
+            }            
+
+        } catch (error) {
+            this.errorService.handleErrorResponse(error)(res);            
+        }
+    }
+
+
 
     private createCharacters = async (characterSuggestions: [], storyId: string, userId: string) => {
         console.log({characterSuggestions});            
