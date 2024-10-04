@@ -16,12 +16,11 @@ RUN npm install
 COPY . .
 
 RUN npm run build
-RUN prisma migrate reset
-RUN prisma generate
-RUN prisma db push
 
+
+RUN chmod +x docker/entrypoint.sh
 # Expose the port that your app runs on
 EXPOSE 3300
 
 # Command to run your application
-CMD ["npm", "start"]
+CMD ["bash", "docker/entrypoint.sh"]

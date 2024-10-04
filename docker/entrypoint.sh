@@ -3,6 +3,7 @@ set -e
 
 # Run database migrations
 echo "Running prisma generate..."
+npx prisma migrate
 npx prisma generate
 
 # Seed the database
