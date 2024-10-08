@@ -5,7 +5,7 @@ set -e
 echo "Running prisma generate..."
 #npx prisma migrate reset --force
 npx prisma generate
-npx prisma db push
+#npx prisma db push
 
 # Seed the database
 echo "build API artifacts..."
