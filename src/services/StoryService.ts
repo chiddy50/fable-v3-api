@@ -34,9 +34,9 @@ export class StoryService implements IStoryService {
         try {
 
             const stories: any = await this.storyRepo.getAll({
-                // where: {
-                //     status: "published"
-                // },
+                where: {
+                    status: "published"
+                },
                 select: {
                     id: true,
                     userId: true,
@@ -44,6 +44,7 @@ export class StoryService implements IStoryService {
                     projectDescription: true,
                     introductionImage: true,
                     genres: true,
+                    overview: true,
                     publishedAt: true,
                     user: {
                         select: {
@@ -136,7 +137,8 @@ export class StoryService implements IStoryService {
             projectDescription,
             status,
             publishedAt,
-            
+            overview,
+
             // INTRODUCTION
             introductionTone,
             genres,
@@ -281,6 +283,8 @@ export class StoryService implements IStoryService {
                     }),   
 
                     ...(status && { status: status }),
+                    ...(overview && { overview: overview }),
+                    
                     ...(publishedAt && { publishedAt: publishedAt }),
                     
                     ...(writingStep && { writingStep: writingStep }),

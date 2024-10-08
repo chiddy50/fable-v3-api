@@ -21,10 +21,12 @@ model User {
   publicId             String?   @unique
   primaryWalletAddress String?
   depositAddress       String? 
+  tipLink               String? 
   createdAt            DateTime  @default(now())
   stories              Story[]
   transactions         Transaction[]
   storyAccesses StoryAccess[]
+  images       Image[]
 }
 
 model Story {
@@ -148,6 +150,7 @@ model Story {
   characters            Character[]
   plotSuggestions       PlotSuggestion[]
   transactions       Transaction[]
+  images       Image[]
 
   storyStructure StoryStructure?
   storySetting   StorySetting?
@@ -261,8 +264,15 @@ model Page {
 
 model Image {
   id        String   @id @default(cuid())
-  url       String?
+  // url       String?
+  image       String?
+  userId       String?
+  storyId       String?
+  source       String? // generated or uploaded
+  paidAt       String?
   createdAt DateTime @default(now())
+  user   User?  @relation(fields: [userId], references: [id])
+  story   Story?  @relation(fields: [storyId], references: [id])
 
   // storyId String? @unique
   // story   Story?  @relation(fields: [storyId], references: [id])
@@ -383,6 +393,7 @@ model Transaction {
   mode              String?
   narration         String?
   confirmedAt       DateTime? 
+  usedAt            DateTime? 
 
   type              String // create-story, read-story
   status            String //initiated, pending, completed, failed, abandoned
@@ -407,106 +418,3 @@ model StoryAccess {
 
   @@unique([userId, storyId]) // Ensure a user can't have duplicate records for the same story
 }
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-// model StoryStructure {
-//   id                            String  @id @default(cuid())
-//   storyId                       String  @unique
-  
-//   protagonistGoal                 Json?
-//   protagonistGoalSuggestions      Json?
-
-//   whoDoesNotHaveProtagonistGoal             String?
-//   whoDoesNotHaveProtagonistGoalSuggestions  Json?
-  
-//   protagonists                  Json?
-//   protagonistSuggestions        Json?
-
-//   protagonistGoalObstacle             Json?
-//   protagonistGoalObstacleSuggestions  Json?
-
-//   protagonistWeaknessStrengthSuggestions  Json?
-
-//   protagonistGoalMotivationSuggestions    Json?
-
-//   settingSuggestions              Json?
-//   introductionSetting            Json?
-
-//   introductionStakes            Json?
-//   introductionStakesSuggestions Json?
-
-//   introductionTone              Json?
-//   introductionToneSuggestions   Json?
-
-//   antagonists                  Json?
-//   antagonistSuggestions        Json?
-
-//   antagonisticForce             Json?
-
-//   exposition                    Json?
-//   expositionSuggestions         Json?
-//   expositionCharacters          Json?
-//   expositionSummary             String?
-
-//   hook                          Json?
-//   hookSuggestions               Json?
-//   hookCharacters                Json?
-//   hookSummary                   String?
-
-//   incitingEvent                 Json?
-//   incitingEventSuggestions      Json?
-//   incitingEventCharacters       Json?
-//   incitingEventSummary          String?
-
-//   protagonistOrdinaryWorld      Json?
-//   protagonistOrdinaryWorldSuggestions Json?
-//   protagonistOrdinaryWorldSummary Json?
-
-//   firstPlotPoint                Json?
-//   firstPlotPointSuggestions     Json?
-//   firstPlotPointCharacters      Json?
-//   firstPlotPointSummary         String?
-
-//   progressiveComplication                  Json?
-//   progressiveComplicationSuggestions       Json?
-//   progressiveComplicationSummary           Json?
-
-//   firstPinchPoint               Json?
-//   firstPinchPointSuggestions    Json?
-//   firstPinchPointCharacters     Json?
-//   firstPinchPointSummary        String?
-
-//   midpoint                      Json?
-//   midpointSuggestions           Json?
-//   midpointCharacters            Json?
-//   midpointSummary               String?
-
-//   secondPinchPoint              Json?
-//   secondPinchPointSuggestions   Json?
-//   secondPinchPointCharacters    Json?
-//   secondPinchPointSummary       String?
-
-//   thirdPlotPoint                Json?
-//   thirdPlotPointSuggestions     Json?
-//   thirdPlotPointCharacters      Json?
-//   thirdPlotPointSummary         String?
-
-//   climax                        Json?
-//   climaxSuggestions             Json?  
-//   climaxCharacters              Json?
-//   climaxSummary                 String?
-
-//   story   Story @relation(fields: [storyId], references: [id], onDelete: Cascade)
-// }
