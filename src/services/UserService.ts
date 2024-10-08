@@ -5,7 +5,7 @@ import { Response, Request } from "express";
 import { RoleTypes } from "../shared/enum";
 import * as R from "ramda";
 import jwt, { JwtPayload } from "jsonwebtoken";
-import { User } from "../shared/Interface";
+import { CustomRequest, IJwtPayload, User } from "../shared/Interface";
 import { ZepClient } from "@getzep/zep-cloud";
 
 export interface IUserService {
@@ -66,8 +66,28 @@ export class UserService implements IUserService {
     
     } catch (error) {
       this.errorService.handleErrorResponse(error)(res);
+    }    
+  }
+
+  public getAuthUser = async (
+    req: CustomRequest,
+    res: Response
+  ): Promise<void> => {
+    try {
+      const user: IJwtPayload = req.user as IJwtPayload; 
+      const email = user?.email;
+
+      const reader = await this.userRepo.getUnique({ where: { email } }) as User | null;
+      if (!reader) throw new Error("Unidentified User");
+
+      res.status(200).json({ 
+        user: reader, 
+        error: false, 
+        message: "success" 
+    });
+    } catch (error) {
+      this.errorService.handleErrorResponse(error)(res);                  
     }
-    
   }
 
   private createExternalUser = async (data: ZepUserPayload) => {

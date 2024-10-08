@@ -5,6 +5,11 @@ import { middlewareServiceFactory } from "../factories/MiddleServiceFactory";
 const StoryAccessController: Router = express.Router();
 
 StoryAccessController.get(
+    "/view/:id", 
+    storyAccessService.viewStory
+);
+
+StoryAccessController.get(
     "/read/:id", 
     middlewareServiceFactory.verifyToken,
     storyAccessService.readStory

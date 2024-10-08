@@ -44,6 +44,7 @@ export class StoryService implements IStoryService {
                     projectDescription: true,
                     introductionImage: true,
                     genres: true,
+                    overview: true,
                     publishedAt: true,
                     user: {
                         select: {
@@ -136,7 +137,8 @@ export class StoryService implements IStoryService {
             projectDescription,
             status,
             publishedAt,
-            
+            overview,
+
             // INTRODUCTION
             introductionTone,
             genres,
@@ -281,6 +283,8 @@ export class StoryService implements IStoryService {
                     }),   
 
                     ...(status && { status: status }),
+                    ...(overview && { overview: overview }),
+                    
                     ...(publishedAt && { publishedAt: publishedAt }),
                     
                     ...(writingStep && { writingStep: writingStep }),

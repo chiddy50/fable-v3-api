@@ -34,6 +34,14 @@ export class StoryStructureService implements IStoryStructureService {
             protagonists,
             suggestedCharacters,
 
+            introductionLocked,
+            incitingIncidentLocked,
+            firstPlotPointLocked,
+            risingActionAndMidpointLocked,
+            pinchPointsAndSecondPlotPointLocked,
+            climaxAndFallingActionLocked,
+            resolutionLocked,
+
             introduceProtagonistAndOrdinaryWorld, 
             incitingIncident,            
             firstPlotPoint,  
@@ -77,8 +85,22 @@ export class StoryStructureService implements IStoryStructureService {
                 }
             });
 
-            console.log({introduceProtagonistAndOrdinaryWorld});
-            
+            const updateStory: any = await this.storyRepo.update({
+                where: { 
+                    id: id,
+                    userId: user?.id,   
+                },
+                data: {
+                    ...(introductionLocked && { introductionLocked: introductionLocked }),
+                    ...(incitingIncidentLocked && { incitingIncidentLocked: incitingIncidentLocked }),
+                    ...(firstPlotPointLocked && { firstPlotPointLocked: firstPlotPointLocked }),
+                    ...(risingActionAndMidpointLocked && { risingActionAndMidpointLocked: risingActionAndMidpointLocked }),
+                    ...(pinchPointsAndSecondPlotPointLocked && { pinchPointsAndSecondPlotPointLocked: pinchPointsAndSecondPlotPointLocked }),
+                    ...(climaxAndFallingActionLocked && { climaxAndFallingActionLocked: climaxAndFallingActionLocked }),
+                    ...(resolutionLocked && { resolutionLocked: resolutionLocked }),
+                    
+                }
+            });            
 
             res.status(200).json({ 
                 data: { 
