@@ -22,6 +22,35 @@ export class StoryAccessService implements IStoryAccessService {
         private errorService: IErrorService
     ) {}
 
+    public viewStory = async (req: Request,
+        res: Response
+    ): Promise<void> => {
+        try {
+            const { id } = req.params;
+            if (!id) throw new Error("Invalid id");
+            
+            const story: any = await this.storyRepo.get({
+                where: {
+                    id
+                },
+                include: {
+                    user: true,
+                    storyStructure: true
+                }
+            });
+            if (!story) throw new Error("Story not found");
+
+            res.status(200).json({ 
+                story, 
+                error: false, 
+                message: "success" 
+            });
+        } catch (error) {
+            console.error(error);       
+            this.errorService.handleErrorResponse(error)(res);  
+        }
+    }
+
     public readStory = async (
         req: CustomRequest,
         res: Response
