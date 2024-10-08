@@ -24,6 +24,16 @@ export class StoryStructureService implements IStoryStructureService {
         const { id } = req.params;
 
         const {
+            introductionTone,
+            introductionToneSuggestions,
+            introductionGenreSuggestions,
+            genre,
+            introductionSettingSuggestions,
+            introductionSetting,
+            protagonistSuggestions,
+            protagonists,
+            suggestedCharacters,
+
             introduceProtagonistAndOrdinaryWorld, 
             incitingIncident,            
             firstPlotPoint,  
@@ -55,8 +65,20 @@ export class StoryStructureService implements IStoryStructureService {
                     ...(pinchPointsAndSecondPlotPoint && { pinchPointsAndSecondPlotPoint }),
                     ...(climaxAndFallingAction && { climaxAndFallingAction }),
                     ...(resolution && { resolution }),
+
+                    ...(introductionToneSuggestions && {
+                        introductionToneSuggestions: introductionToneSuggestions
+                    }),
+                    ...(introductionTone && {
+                        introductionTone: introductionTone
+                    }),
+                    
+
                 }
             });
+
+            console.log({introduceProtagonistAndOrdinaryWorld});
+            
 
             res.status(200).json({ 
                 data: { 
@@ -70,4 +92,6 @@ export class StoryStructureService implements IStoryStructureService {
             this.errorService.handleErrorResponse(error)(res);            
         }
     }
+
+    
 }
