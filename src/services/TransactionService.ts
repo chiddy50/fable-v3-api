@@ -272,15 +272,83 @@ export class TransactionService implements ITransactionService {
         try {
             const user: IJwtPayload = req.user as IJwtPayload;         
             if (!user?.id) throw new Error("User Not Found"); 
+
+            const { page = 1, limit } = req.query;
+            const parsedPage: number = parseInt(page as string, 10); 
+            const parsedLimit: number = parseInt(limit as string, 10); 
+            let filter: object = { userId: user?.id };
+            const totalCount: number = await this.transactionRepo.count(filter); // Assuming you have a method to count total challenges
+            const offset = (parsedPage - 1) * parsedLimit;
             
             const transactions = await this.transactionRepo.getAll({ 
                 where: {
                     userId: user?.id
-                }
+                },
+                orderBy: {
+                    createdAt: 'desc'
+                },
+                skip: Number(offset),
+                take: Number(limit),
             });
 
+            const createdStoryCompletedTransactions = await this.transactionRepo.getAll({ 
+                where: {
+                    userId: user?.id,
+                    status: "completed",
+                    type: "create-story"
+                },
+                select: {
+                    amount: true,
+                },
+            });
+
+            const readStoryCompletedTransactions = await this.transactionRepo.getAll({ 
+                where: {
+                    userId: user?.id,
+                    status: "completed",
+                    type: "read-story"
+                },
+                select: {
+                    amount: true,
+                },
+            });
+
+            const createdStoryTotalAmount = createdStoryCompletedTransactions.reduce((sum, transaction: any) => {
+                const amountAsNumber = parseFloat(transaction?.amount);
+                return sum + (isNaN(amountAsNumber) ? 0 : amountAsNumber);
+            }, 0);
+
+            const readStoryTotalAmount = readStoryCompletedTransactions.reduce((sum, transaction: any) => {
+                const amountAsNumber = parseFloat(transaction?.amount);
+                return sum + (isNaN(amountAsNumber) ? 0 : amountAsNumber);
+            }, 0);
+
+            const creatorStoriesThatHaveBeenRead: any = await this.transactionRepo.aggregate({
+                _sum: {
+                    formatAmount: true, // Sum the 'amount' field
+                },
+                where: {
+                  type: "read-story", // Only transactions where users read your story
+                  story: {
+                    userId: user?.id, // Only consider transactions for stories that belong to you
+                  },
+                },
+            });
+            const amountEarned = creatorStoriesThatHaveBeenRead?._sum?.formatAmount || 0;
+
+
+            const totalPages: number = Math.ceil(totalCount / parsedLimit);
+            const hasNextPage: boolean = parsedPage < totalPages;
+            const hasPrevPage: boolean = parsedPage > 1;
+
             res.status(200).json({ 
+                totalPages, hasNextPage, hasPrevPage,
+                amountEarned: Number(amountEarned?.toFixed(2)),
                 transactions,
+                createdStoryTotalAmount: createdStoryTotalAmount,
+                readStoryTotalAmount: readStoryTotalAmount,
+                createdStoryCompletedTransactionsCount: createdStoryCompletedTransactions.length,
+                readStoryCompletedTransactionsCount: readStoryCompletedTransactions.length,
                 error: false, 
                 message: "success" 
             });
@@ -299,6 +367,7 @@ export class TransactionService implements ITransactionService {
                 type: payload.type,          
                 narration: payload.narration,
                 amount: payload.amount,    
+                formatAmount: Number(payload.amount),
                 currency: payload.currency,
                 deposit_address: payload.deposit_address,      
                 key: payload.clientSecret,

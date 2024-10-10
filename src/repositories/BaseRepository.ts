@@ -5,6 +5,7 @@ export interface IBase {
   getUnique(filter: object): Promise<object>;
   get(filter: object): Promise<object>;
   getAll(filter: object): Promise<Array<object>>;
+  aggregate(filter: object): Promise<Array<object>>;
   count(filter: object): Promise<number>;
 }
 
@@ -39,6 +40,10 @@ export class Base implements IBase {
 
   public getAll = async (filter: object): Promise<Array<object>> => {
     return await this.db[this.modelName].findMany(filter);
+  };
+
+  public aggregate = async (filter: object): Promise<Array<object>> => {
+    return await this.db[this.modelName].aggregate(filter);
   };
 
   public count = async (filter: object): Promise<number> => {

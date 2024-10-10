@@ -42,6 +42,7 @@ model Story {
   overview                      String?
   
   writingStep                   Int? @default(1)
+  duration                      String?
 
   currentPlotStep               Int? @default(1)
   introductionStep              Int? @default(1)
@@ -153,27 +154,27 @@ model Story {
   images       Image[]
 
   storyStructure StoryStructure?
-  storySetting   StorySetting?
+  // storySetting   StorySetting?
   // image Image?
   storyAccesses StoryAccess[]
 
   user User @relation(fields: [userId], references: [id], onDelete: Cascade)
 }
 
-model StorySetting {
-  id                            String  @id @default(cuid())
-  storyId                       String  @unique
+// model StorySetting {
+//   id                            String  @id @default(cuid())
+//   storyId                       String  @unique
 
-  // INCITING INCIDENT
-  typeOfEvent String?                
-  causeOfTheEvent String?
-  stakesAndConsequences String?
-  incitingIncidentTone  Json?
-  incitingIncidentSetting String?
+//   // INCITING INCIDENT
+//   typeOfEvent String?                
+//   causeOfTheEvent String?
+//   stakesAndConsequences String?
+//   incitingIncidentTone  Json?
+//   incitingIncidentSetting String?
 
-  story   Story @relation(fields: [storyId], references: [id], onDelete: Cascade)
+//   story   Story @relation(fields: [storyId], references: [id], onDelete: Cascade)
 
-}
+// }
 model StoryStructure {
   id                            String  @id @default(cuid())
   storyId                       String  @unique
@@ -398,6 +399,7 @@ model Transaction {
   type              String // create-story, read-story
   status            String //initiated, pending, completed, failed, abandoned
   amount            String
+  formatAmount            Decimal?
   currency          String
   createdAt         DateTime @default(now())
 
