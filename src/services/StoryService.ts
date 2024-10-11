@@ -556,8 +556,8 @@ export class StoryService implements IStoryService {
             const user: IJwtPayload = req.user as IJwtPayload;   
 
             if (!user?.id) throw new Error("User Not Found");
-            const email = user?.email;
-            const authUser = await this.userRepo.getUnique({ where: { email } }) as User | null;
+            
+            const authUser = await this.userRepo.getUnique({ where: { id: user?.id } }) as User | null;
             if (!authUser?.id) throw new Error("User Not Found");
 
             const newStory = await this.storyRepo.create({ 
@@ -606,13 +606,14 @@ export class StoryService implements IStoryService {
             })  as Story;
 
             res.status(201).json({ 
-                data: { story }, 
+                story, 
                 error: false, 
                 message: "success" 
             });
 
         } catch (error) {
-            console.error(error);            
+            console.error(error);       
+            this.errorService.handleErrorResponse(error)(res);
         }
     }
 
@@ -825,8 +826,8 @@ export class StoryService implements IStoryService {
             
             if (!id) throw new Error("Invalid id");
             const user: IJwtPayload = req.user as IJwtPayload; 
-            const email = user?.email;
-            const authUser = await this.userRepo.getUnique({ where: { email } }) as User | null;
+
+            const authUser = await this.userRepo.getUnique({ where: { id: user?.id } }) as User | null;
 
             const story: any = await this.storyRepo.get({
                 where: {

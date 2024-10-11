@@ -83,9 +83,7 @@ export class TransactionService implements ITransactionService {
             // console.log('Registered webhook', success, message);
 
             res.status(200).json({ 
-                data: { 
-                    clientSecret, id
-                }, 
+                clientSecret, id,
                 error: false, 
                 message: "success" 
             });
@@ -132,8 +130,8 @@ export class TransactionService implements ITransactionService {
             const { id } = req.params;
             const { storyId, clientSecret, destination, locale, mode, type } = req.body;
             const user: IJwtPayload = req.user as IJwtPayload;    
-            const email = user?.email;
-            const authUser = await this.userRepo.getUnique({ where: { email } }) as User | null;
+
+            const authUser = await this.userRepo.getUnique({ where: { id: user?.id } }) as User | null;
 
             const transaction: any = await this.transactionRepo.get({
                 where: { 
