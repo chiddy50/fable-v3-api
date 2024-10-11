@@ -20,8 +20,9 @@ model User {
   name                 String?
   publicId             String?   @unique
   primaryWalletAddress String?
+  publicKey            String?
   depositAddress       String? 
-  tipLink               String? 
+  tipLink              String? 
   createdAt            DateTime  @default(now())
   stories              Story[]
   transactions         Transaction[]
@@ -414,6 +415,9 @@ model StoryAccess {
   storyId   String
   currentChapter  String  
   hasAccess Boolean  @default(false)
+
+  updatedAt   DateTime?
+  createdAt                     DateTime @default(now())
 
   user      User     @relation(fields: [userId], references: [id])
   story     Story    @relation(fields: [storyId], references: [id])

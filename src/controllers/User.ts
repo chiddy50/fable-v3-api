@@ -5,6 +5,7 @@ import { middlewareServiceFactory } from "../factories/MiddleServiceFactory";
 
 const UserController: Router = express.Router();
 UserController.post("/", userServiceFactory.register);
+UserController.post("/verify-jwt", userServiceFactory.verifyJwt);
 UserController.get(
     "/auth", 
     middlewareServiceFactory.verifyToken,

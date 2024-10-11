@@ -49,6 +49,14 @@ export class StoryStructureService implements IStoryStructureService {
             pinchPointsAndSecondPlotPoint, 
             climaxAndFallingAction,  
             resolution,  
+
+
+            climaxConsequences,
+            howCharactersEvolve,
+            resolutionOfConflict,
+            resolutionSetting,
+            resolutionTone,
+
         } = req.body;
         try {
             const user: IJwtPayload = req.user as IJwtPayload;    
@@ -99,6 +107,12 @@ export class StoryStructureService implements IStoryStructureService {
                     ...(climaxAndFallingActionLocked && { climaxAndFallingActionLocked: climaxAndFallingActionLocked }),
                     ...(resolutionLocked && { resolutionLocked: resolutionLocked }),
                     
+
+                    ...(climaxConsequences && { climaxConsequences }),
+                    ...(howCharactersEvolve && { howCharactersEvolve }),
+                    ...(resolutionOfConflict && { resolutionOfConflict }),
+                    ...(resolutionSetting && { resolutionSetting }),
+                    ...(resolutionTone && { resolutionTone }),
                 }
             });            
 

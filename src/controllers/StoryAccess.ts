@@ -21,4 +21,12 @@ StoryAccessController.put(
     storyAccessService.moveStoryChapter
 );
 
+StoryAccessController.get(
+    "/continue", 
+    middlewareServiceFactory.verifyToken,
+    storyAccessService.continueStory
+);
+
+
+
 export default StoryAccessController;

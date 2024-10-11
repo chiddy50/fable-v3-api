@@ -60,7 +60,8 @@ export class StoryAccessService implements IStoryAccessService {
             const { id } = req.params;
             if (!id) throw new Error("Invalid id");
             const user: IJwtPayload = req.user as IJwtPayload; 
-            
+            if (!user?.id) throw new Error("User not found");
+
             const story: any = await this.storyRepo.get({
                 where: {
                     id
@@ -71,10 +72,9 @@ export class StoryAccessService implements IStoryAccessService {
             });
             if (!story) throw new Error("Story not found");
 
-            const depositAddress = story?.user?.depositAddress;
-            
-            const email = user?.email;
-            const reader = await this.userRepo.getUnique({ where: { email } }) as User | null;
+            const depositAddress = story?.user?.depositAddress;            
+
+            const reader = await this.userRepo.getUnique({ where: { id: user?.id } }) as User | null;
             if (!reader) throw new Error("Unidentified User");
 
             const accessRecord: any = await this.storyAccessRepo.getUnique({
@@ -168,8 +168,9 @@ export class StoryAccessService implements IStoryAccessService {
             const { currentChapter } = req.body;
             if (!id) throw new Error("Invalid id");
             const user: IJwtPayload = req.user as IJwtPayload; 
-            const email = user?.email;
-            const reader = await this.userRepo.getUnique({ where: { email } }) as User | null;
+
+            const reader = await this.userRepo.getUnique({ where: { id: user?.id } }) as User | null;
+            if (!reader) throw new Error("User not found");
             
             const story: any = await this.storyRepo.get({
                 where: {
@@ -187,7 +188,7 @@ export class StoryAccessService implements IStoryAccessService {
                 }
             });
             if (!accessRecord) throw new Error("No Access Record");
-
+            console.log({currentChapter, accessRecord});            
 
             const updateStory: any = await this.storyAccessRepo.update({
                 where: { 
@@ -197,8 +198,13 @@ export class StoryAccessService implements IStoryAccessService {
                     currentChapter: currentChapter
                 }
             });
+            if (updateStory) {
+                console.log({message: "Updated", updateStory});                
+            }else{
+                console.log({message: "Not Updated", updateStory});                
+            }
             res.status(200).json({ 
-                accessRecord,
+                updateStory,
                 error: false, 
                 message: "success" 
             });
@@ -209,6 +215,35 @@ export class StoryAccessService implements IStoryAccessService {
         }
     }
 
+    public continueStory = async (
+        req: CustomRequest,
+        res: Response
+    ): Promise<void> => {
+        try {
+            const user: IJwtPayload = req.user as IJwtPayload; 
+            if (!user?.id) throw new Error("User not found");
+            
+            const stories: any = await this.storyAccessRepo.getAll({
+                where: {
+                    userId: user?.id,
+                    hasAccess: true,
+                },
+                include: {
+                    story: true
+                }
+            });
+
+            res.status(200).json({ 
+                stories,
+                error: false, 
+                message: "success" 
+            });
+
+        } catch (error) {
+            console.error(error);    
+            this.errorService.handleErrorResponse(error)(res);            
+        }
+    }
     
 
     private getUnpaidStoryVersion = async (storyId: string) => {
