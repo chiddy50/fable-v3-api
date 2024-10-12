@@ -243,6 +243,8 @@ export class StoryService implements IStoryService {
             pinchPointsAndSecondPlotPoint,
             climaxAndFallingAction,
             resolution,
+
+            updatedAt
         } = req.body;
 
         try {
