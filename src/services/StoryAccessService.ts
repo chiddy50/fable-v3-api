@@ -102,7 +102,8 @@ export class StoryAccessService implements IStoryAccessService {
                         userId: reader?.id,
                         storyId: story?.id,
                         currentChapter: "1",
-                        hasAccess: false
+                        hasAccess: false,
+                        updatedAt: new Date()
                     }
                 });
 
@@ -195,7 +196,8 @@ export class StoryAccessService implements IStoryAccessService {
                     id: accessRecord?.id,  
                 },
                 data: {
-                    currentChapter: currentChapter
+                    currentChapter: currentChapter,
+                    updatedAt: new Date()
                 }
             });
             if (updateStory) {
