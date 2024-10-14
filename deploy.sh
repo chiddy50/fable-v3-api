@@ -2,7 +2,7 @@
 
 set -e
 
-APP_DIR="~/fable"
+APP_DIR="/root/fable"
 BACKEND_DIR="$APP_DIR/fable-v3-api/"
 FRONTEND_DIR="/$APP_DIR/fable-v3-frontend/"
 BRANCH="devops"
