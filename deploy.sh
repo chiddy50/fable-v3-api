@@ -20,8 +20,6 @@ git reset --hard origin/$BRANCH
 echo "refreshing deploymemnt..."
 cd $APP_DIR || exit
 
-echo "Stopping the current Docker Compose services..."
-docker-compose down
 
 # Rebuild and start the Docker Compose services
 echo "Rebuilding and starting Docker Compose services..."
@@ -31,6 +29,6 @@ echo "waiting for health status"
 sleep 30
 
 echo "Checking Docker services status..."
-docker ps -a
+docker compose ps --format "table {{.ID}}\t{{.Name}}\t{{.State}}\t{{.Health.Status}}"
 
 echo "Deployment completed successfully."
