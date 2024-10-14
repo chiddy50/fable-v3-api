@@ -29,6 +29,6 @@ echo "waiting for health status"
 sleep 30
 
 echo "Checking Docker services status..."
-docker compose ps --format "table {{.ID}}\t{{.Name}}\t{{.State}}\t{{.Health.Status}}"
+docker compose ps --format "table {{.Name}}\t{{.Status}}\t{{.Ports}}"
 
 echo "Deployment completed successfully."
