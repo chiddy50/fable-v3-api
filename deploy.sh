@@ -21,9 +21,11 @@ echo "refreshing deploymemnt..."
 cd $APP_DIR || exit
 
 
-# Rebuild and start the Docker Compose services
-echo "Rebuilding and starting Docker Compose services..."
-docker compose build node-api && docker compose up -d node-api
+echo "Rebuilding FRONTEND service..."
+docker compose build node-api
+
+echo "Restarting FRONTEND service..."
+docker compose up -d node-api
 
 echo "waiting for health status"
 sleep 15
