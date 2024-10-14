@@ -23,10 +23,10 @@ cd $APP_DIR || exit
 
 # Rebuild and start the Docker Compose services
 echo "Rebuilding and starting Docker Compose services..."
-docker-compose up -d --build
+docker compose build node-api && docker compose up -d node-api
 
 echo "waiting for health status"
-sleep 30
+sleep 15
 
 echo "Checking Docker services status..."
 docker compose ps --format "table {{.Name}}\t{{.Status}}\t{{.Ports}}"
