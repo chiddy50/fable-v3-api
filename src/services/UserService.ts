@@ -24,7 +24,17 @@ type ZepUserPayload = {
   publicAddress: string
 }
 const hostname = process.env.HOSTNAME || 'usefable.xyz';
-const verifier = Keypair.generate();
+// const loginDomain = process.env.TEST_MODE ? "example-getcode.com" : "perk.exchange";
+const loginDomain = "example-getcode.com" ?? "usefable.xyz";
+
+const exampleGetCodePrivate = new Uint8Array([
+  83, 255, 243, 143, 25, 147, 129, 161, 100, 93, 242, 14, 163, 113, 169, 47,
+  214, 219, 32, 165, 210, 0, 137, 115, 42, 212, 37, 205, 193, 3, 249, 158,
+]);
+const verifier = Keypair.fromSecretKey(exampleGetCodePrivate)
+// const verifier = process.env.TEST_MODE
+//   ? Keypair.fromSecretKey(exampleGetCodePrivate)
+//   : Keypair.generate();
 
 export class UserService implements IUserService {
   constructor(
@@ -171,7 +181,8 @@ export class UserService implements IUserService {
     try {
 
       res.status(200).json({ 
-        domain: 'usefable.xyz',        
+        // domain: 'localhost:3000', 
+        domain: loginDomain,
         verifier: verifier.getPublicKey().toBase58(),
         error: false, 
         message: "success" 
@@ -194,7 +205,8 @@ export class UserService implements IUserService {
           // Cannot be localhost or a subdomain. It must be a domain that you own
           // and have access to. Code will verify that this domain is owned by you
           // by looking for the .well-known/code-payments.json file.
-          domain: 'usefable.xyz',
+          // domain: 'localhost:3000',
+          domain: loginDomain,
         },
         mode: "login",
         signers: [ verifier ],
