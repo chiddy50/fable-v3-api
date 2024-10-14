@@ -16,7 +16,7 @@ git fetch --all
 git reset --hard origin/$BRANCH
 
 echo "refreshing deploymemnt..."
-cd $APP_DIR
+cd $APP_DIR || exit
 
 echo "Stopping the current Docker Compose services..."
 docker-compose down
