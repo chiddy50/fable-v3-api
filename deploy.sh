@@ -4,10 +4,12 @@ set -e
 
 APP_DIR="/root/fable"
 BACKEND_DIR="$APP_DIR/fable-v3-api/"
-FRONTEND_DIR="/$APP_DIR/fable-v3-frontend/"
+FRONTEND_DIR="$APP_DIR/fable-v3-frontend/"
 BRANCH="devops"
 
 echo "update API code base"
+
+pwd
 
 cd $BACKEND_DIR || exit
 
