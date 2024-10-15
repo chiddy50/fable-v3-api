@@ -15,8 +15,8 @@ export interface IAuthenticationService {
 const JWT_SECRET = process.env.JWT_SECRET ?? "d8186f2284334f71dcf3acc3b4218784e77df56c9e1ef7332c16590511dd72caf135dc21531c0287a789878b76b422d4f71b1d9032a1f47015fad73119ae40ab28b836bb4ee5723bf2f86f6898970c9766cab0f06c54209b0a43a6973dfbadf70d0c3dcf6cbd7bc242431433e492f1179885d684de0a0f17b1ae741ea38e077b4575ade965cc0331bdc40025c6600a46e3767baf5aff91cf7b41bce725dbeb340249719ec1425704cc2092ced64bf655a238570df65b6bd06b2714426fe589ac2c76cfc0a773ea41c084729f72bc4645711f29608c03162173d04172c7ed7069f470776e80a050a9e2f09c4660ce5432dd21f041e671723ac5cd90676eaf6124";
 
 const hostname = process.env.HOSTNAME || 'usefable.xyz';
-const loginDomain = process.env.TEST_MODE ? "example-getcode.com" : "usefable.xyz";
-// const loginDomain = "example-getcode.com" ?? "usefable.xyz";
+// const loginDomain = process.env.TEST_MODE ? "example-getcode.com" : "usefable.xyz";
+const loginDomain = "usefable.xyz";
 
 const exampleGetCodePrivate = new Uint8Array([
   83, 255, 243, 143, 25, 147, 129, 161, 100, 93, 242, 14, 163, 113, 169, 47,
