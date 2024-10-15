@@ -2,39 +2,14 @@ import { IBase } from "../repositories/BaseRepository";
 import { IAuth } from "../shared/AuthService";
 import { IErrorService } from "../shared/ErrorService";
 import { Response, Request } from "express";
-import { RoleTypes } from "../shared/enum";
-import * as R from "ramda";
 import jwt, { JwtPayload } from "jsonwebtoken";
 import { CustomRequest, IJwtPayload, User } from "../shared/Interface";
 import { ZepClient } from "@getzep/zep-cloud";
-import path from "path"
-import fs from 'fs';
 import * as jose from "jose"
-import * as code from "@code-wallet/client";
-import { Keypair } from "@code-wallet/keys";
 
 export interface IUserService {
   register(req: Request, res: Response): Promise<void>; 
 }
-
-type ZepUserPayload = {
-  email: string,
-  username: string, 
-  user_id: string|undefined, 
-  publicAddress: string
-}
-const hostname = process.env.HOSTNAME || 'usefable.xyz';
-// const loginDomain = process.env.TEST_MODE ? "example-getcode.com" : "perk.exchange";
-const loginDomain = "example-getcode.com" ?? "usefable.xyz";
-
-const exampleGetCodePrivate = new Uint8Array([
-  83, 255, 243, 143, 25, 147, 129, 161, 100, 93, 242, 14, 163, 113, 169, 47,
-  214, 219, 32, 165, 210, 0, 137, 115, 42, 212, 37, 205, 193, 3, 249, 158,
-]);
-const verifier = Keypair.fromSecretKey(exampleGetCodePrivate)
-// const verifier = process.env.TEST_MODE
-//   ? Keypair.fromSecretKey(exampleGetCodePrivate)
-//   : Keypair.generate();
 
 export class UserService implements IUserService {
   constructor(
@@ -174,86 +149,6 @@ export class UserService implements IUserService {
     }
   }
   
-  public getVerifier = async (
-    req: Request,
-    res: Response
-  ): Promise<void> => {
-    try {
-
-      res.status(200).json({ 
-        // domain: 'localhost:3000', 
-        domain: loginDomain,
-        verifier: verifier.getPublicKey().toBase58(),
-        error: false, 
-        message: "success" 
-      });
-    } catch (error) {
-      this.errorService.handleErrorResponse(error)(res);                        
-    }
-  }
-
-  public createIntent = async (
-    req: Request,
-    res: Response
-  ): Promise<void> => {
-    try {
-            
-      const { clientSecret, id } = await code.loginIntents.create({
-        login: {
-          verifier: verifier.getPublicKey().toBase58(),
-    
-          // Cannot be localhost or a subdomain. It must be a domain that you own
-          // and have access to. Code will verify that this domain is owned by you
-          // by looking for the .well-known/code-payments.json file.
-          // domain: 'localhost:3000',
-          domain: loginDomain,
-        },
-        mode: "login",
-        signers: [ verifier ],
-      });
-    
-      console.log('Created intent', id);
-    
-      // The clientSecret value needs to be sent to the browser so that the browser
-      // can use it to setup a login with this intent instance. The client will
-      // use the login details along with this value to derive the same login
-      // intent id on its end.
-    
-      res.status(200).json({ 
-        clientSecret,      
-        error: false, 
-        message: "success" 
-      });
-    } catch (error) {
-      this.errorService.handleErrorResponse(error)(res);                              
-    }
-  }
-  
-  public loginSuccessful = async (
-    req: Request,
-    res: Response
-  ): Promise<void> => {
-    // Get the login intent id from the URL
-    const intent = req.params.id;
-
-    try {
-      // Get the status of the login intent
-      const status = await code.getStatus({ intent });
-      const user   = await code.getUserId({ intent, verifier });
-
-      // Render the success page with the intent id and status
-      res.status(200).json({ 
-        intent, status, user,      
-        error: false, 
-        message: "success" 
-      });
-    } catch (error) {
-      this.errorService.handleErrorResponse(error)(res);                        
-    }
-  }
-
-  
-
   private createExternalUser = async (data: ZepUserPayload) => {
     
     const { email, username, user_id, publicAddress } = data
