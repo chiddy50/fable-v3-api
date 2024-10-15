@@ -7,6 +7,7 @@ import StoryController from "./controllers/Story";
 import CharacterController from "./controllers/Character";
 import TransactionController from "./controllers/Transaction";
 import StoryAccessController from "./controllers/StoryAccess";
+import AuthenticationController from "./controllers/Authentication";
 
 dotenv.config();
 
@@ -17,6 +18,8 @@ app.use(cors());
 app.use(express.json());
 
 app.use("/users", UserController);
+app.use("/auth", AuthenticationController);
+
 app.use("/stories", StoryController);
 app.use("/characters", CharacterController);
 app.use("/transactions", TransactionController);
