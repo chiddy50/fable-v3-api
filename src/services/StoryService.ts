@@ -138,6 +138,7 @@ export class StoryService implements IStoryService {
             status,
             publishedAt,
             overview,
+            creatorName,
 
             // INTRODUCTION
             introductionTone,
@@ -548,11 +549,14 @@ export class StoryService implements IStoryService {
         }
     }
 
-    public createStoryFromScratch = async (
+    /**
+     * CREATE NEW STORY PROJECT
+     */
+    public createNewStoryProject = async (
         req: CustomRequest,
         res: Response
     ): Promise<void> => {
-        const { projectTitle, projectDescription, depositAddress } = req.body;
+        const { projectTitle, projectDescription, creatorName } = req.body;
 
         try {
             const user: IJwtPayload = req.user as IJwtPayload;   
@@ -574,16 +578,13 @@ export class StoryService implements IStoryService {
             }) as Story;
 
             if (!newStory) throw new Error("Could not create new story project");
-            
-            
+                        
             const userUpdated = await this.userRepo.update({
                 where: { id: authUser?.id },
                 data: {
-                    depositAddress
+                    name: creatorName
                 } 
-            });
-            console.log(userUpdated);
-            
+            });            
 
             const storyStructure = await this.storyStructureRepo.create({ 
                 data: {
@@ -616,6 +617,50 @@ export class StoryService implements IStoryService {
         } catch (error) {
             console.error(error);       
             this.errorService.handleErrorResponse(error)(res);
+        }
+    }
+
+    public publishAndUnpublishStory = async (
+        req: CustomRequest,
+        res: Response
+    ): Promise<void> => {
+        const { id } = req.params;
+
+        const { status, publishedAt, depositAddress, tipLink } = req.body;
+        try {
+            const user: IJwtPayload = req.user as IJwtPayload;    
+            if (!user?.id) throw new Error("User Not Found");
+            if (!id) throw new Error("Kindly provide a story ID");
+
+            const story: any = await this.storyRepo.update({
+                where: { 
+                    id: id,
+                    userId: user?.id,   
+                },
+                data: {                    
+                    ...(publishedAt && { publishedAt: publishedAt }),
+                    ...(status && { status: status }),
+                }
+            });
+
+            if (status === "published") {                
+                const userUpdated = await this.userRepo.update({
+                    where: { id: user?.id },
+                    data: {
+                        ...(depositAddress && { depositAddress: depositAddress }),
+                        ...(tipLink && { tipLink: tipLink }),
+                    } 
+                });  
+            }
+
+            res.status(201).json({ 
+                story, 
+                error: false, 
+                message: "success" 
+            });
+
+        } catch (error) {
+            this.errorService.handleErrorResponse(error)(res);            
         }
     }
 
@@ -731,7 +776,6 @@ export class StoryService implements IStoryService {
           this.errorService.handleErrorResponse(error)(res);
         }
     };
-    
 
     public getStoryScenes = async (req: CustomRequest, res: Response): Promise<void> => {
         try {     
@@ -839,7 +883,8 @@ export class StoryService implements IStoryService {
                 include: {
                     characters: true,
                     plotSuggestions: true,
-                    storyStructure: true
+                    storyStructure: true,
+                    user: true
                 }
             });
         

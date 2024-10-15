@@ -19,7 +19,7 @@ StoryController.post(
 StoryController.post(
     "/build-from-scratch", 
     middlewareServiceFactory.verifyToken,
-    storyServiceFactory.createStoryFromScratch
+    storyServiceFactory.createNewStoryProject
 );
 
 StoryController.put(
@@ -46,6 +46,12 @@ StoryController.get(
     "/from-scratch/:id", 
     middlewareServiceFactory.verifyToken,
     storyServiceFactory.getStoryFromScratch
+);
+
+StoryController.put(
+    "/publish/:id", 
+    middlewareServiceFactory.verifyToken,
+    storyServiceFactory.publishAndUnpublishStory
 );
 
 
