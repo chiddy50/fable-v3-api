@@ -4,7 +4,6 @@ import { IErrorService } from "../shared/ErrorService";
 import { Response, Request } from "express";
 import jwt, { JwtPayload } from "jsonwebtoken";
 import { CustomRequest, IJwtPayload, User } from "../shared/Interface";
-import { ZepClient } from "@getzep/zep-cloud";
 import * as jose from "jose"
 
 export interface IUserService {
@@ -43,22 +42,48 @@ export class UserService implements IUserService {
         : await this.userRepo.create({ data: userData }) as User;
     
       const statusCode: number = existingUser ? 200 : 201;
-      console.log({user});
+      // console.log({user});
       
-      if (user && !user?.publicId) {
-        await this.createExternalUser({
-          email,
-          username,
-          user_id: user?.id, 
-          publicAddress
-        })
-      }
+      // if (user && !user?.publicId) {
+      //   await this.createExternalUser({
+      //     email,
+      //     username,
+      //     user_id: user?.id, 
+      //     publicAddress
+      //   })
+      // }
     
       res.status(statusCode).json({ data: user, error: false, message: responseMessage });
     
     } catch (error) {
       this.errorService.handleErrorResponse(error)(res);
     }    
+  }
+
+  public update = async (
+    req: CustomRequest,
+    res: Response
+  ): Promise<void> => {
+      try {
+        const { depositAddress, name, tipLink } = req.body;
+
+        const user: IJwtPayload = req.user as IJwtPayload; 
+        
+        if (!user) throw new Error("Unidentified User");
+
+        const userUpdated = await this.userRepo.update({ 
+          where: { id: user?.id }, 
+          data: {
+            ...(depositAddress && { depositAddress: depositAddress }),
+            ...(name && { name: name }),
+            ...(tipLink && { tipLink: tipLink })
+          } 
+        }) as User;
+        res.status(200).json({ user: userUpdated, error: false, message: "User record updated" });
+
+      } catch (error) {
+        this.errorService.handleErrorResponse(error)(res);                          
+      }
   }
 
   public getAuthUser = async (
@@ -149,25 +174,25 @@ export class UserService implements IUserService {
     }
   }
   
-  private createExternalUser = async (data: ZepUserPayload) => {
+  // private createExternalUser = async (data: ZepUserPayload) => {
     
-    const { email, username, user_id, publicAddress } = data
-    const API_KEY = process.env.ZEP_SECRET_KEY
-    const zep = new ZepClient({ apiKey: API_KEY });
+  //   const { email, username, user_id, publicAddress } = data
+  //   const API_KEY = process.env.ZEP_SECRET_KEY
+  //   const zep = new ZepClient({ apiKey: API_KEY });
 
-    const zepUserRecord = await zep.user.add({
-      email, 
-      firstName: username, 
-      userId: user_id,
-      metadata: {
-        publicAddress
-      }
-    });
+  //   const zepUserRecord = await zep.user.add({
+  //     email, 
+  //     firstName: username, 
+  //     userId: user_id,
+  //     metadata: {
+  //       publicAddress
+  //     }
+  //   });
     
-    const user = await this.userRepo.update({ 
-      where: { id: user_id }, 
-      data: { publicId: zepUserRecord.id?.toString() } 
-    })
-    return user ?? false;
-  }
+  //   const user = await this.userRepo.update({ 
+  //     where: { id: user_id }, 
+  //     data: { publicId: zepUserRecord.id?.toString() } 
+  //   })
+  //   return user ?? false;
+  // }
 }
