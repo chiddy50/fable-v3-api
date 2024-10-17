@@ -44,7 +44,7 @@ export class TransactionService implements ITransactionService {
         if (type === "read-story" && !depositAddress) throw new Error("No deposit address found");        
 
         const storyId = id;
-        const amount = 0.05;
+        const amount = type === "read-story" ? 0.05 : 0.25;
         const currency = 'usd';
 
         const deposit_address = type === "create-story" ? process.env.CODE_WALLET_DEPOSIT_ADDRESS : depositAddress;
