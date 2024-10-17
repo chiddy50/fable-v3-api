@@ -45,6 +45,8 @@ export class TransactionService implements ITransactionService {
 
         const storyId = id;
         const amount = type === "read-story" ? 0.05 : 0.25;
+        console.log({amount});
+        
         const currency = 'usd';
 
         const deposit_address = type === "create-story" ? process.env.CODE_WALLET_DEPOSIT_ADDRESS : depositAddress;
@@ -133,71 +135,91 @@ export class TransactionService implements ITransactionService {
 
             const authUser = await this.userRepo.getUnique({ where: { id: user?.id } }) as User | null;
 
+            console.log({ 
+                unique_id: id, 
+                storyId, 
+                key: clientSecret,
+                deposit_address: destination
+            });
+            
             const transaction: any = await this.transactionRepo.get({
                 where: { 
-                    unique_id: id, 
+                    // unique_id: id, 
                     storyId, 
                     key: clientSecret,
                     deposit_address: destination
                 },
             });
-    
+            console.log({transaction});
+            
             if (!transaction) {
                 throw new Error("Could not update transaction")
             }
 
-            const updatedTransaction: any = await this.transactionRepo.update({
-                where: { 
-                    id: transaction.id,
-                    unique_id: id, 
-                    deposit_address: destination,
-                    storyId 
-                },
-                data: {
-                    status: "completed",
-                    locale, 
-                    mode,
-                    confirmedAt: new Date(),
-                }
-            });
+            if (transaction.status !== "completed") {
 
-            if (updatedTransaction?.type === "create-story") {                
-                const updateStory: any = await this.storyRepo.update({
+                const updatedTransaction: any = await this.transactionRepo.update({
                     where: { 
-                        id: storyId,
-                        userId: user?.id,   
+                        id: transaction.id,
+                        // unique_id: id, 
+                        deposit_address: destination,
+                        storyId 
                     },
                     data: {
-                        paidAt: new Date(),
-                        isPaid: true
+                        status: "completed",
+                        locale, 
+                        mode,
+                        confirmedAt: new Date(),
                     }
                 });
-            }
-
-            if (type === "read-story") {                
-                const storyAccess = await this.storyAccessRepo.update({ 
-                    where: { 
-                        userId_storyId: {
-                            storyId: storyId,
-                            userId: user?.id,  
+    
+                if (updatedTransaction?.type === "create-story") {                
+                    const updateStory: any = await this.storyRepo.update({
+                        where: { 
+                            id: storyId,
+                            userId: user?.id,   
                         },
-                        // id: storyId,
-                        // userId: user?.id,   
-                    },
-                    data: {
-                        hasAccess: true
-                    }
+                        data: {
+                            paidAt: new Date(),
+                            isPaid: true
+                        }
+                    });
+                }
+    
+                if (type === "read-story") {                
+                    const storyAccess = await this.storyAccessRepo.update({ 
+                        where: { 
+                            userId_storyId: {
+                                storyId: storyId,
+                                userId: user?.id,  
+                            },
+                            // id: storyId,
+                            // userId: user?.id,   
+                        },
+                        data: {
+                            hasAccess: true
+                        }
+                    });
+                }
+
+                res.status(200).json({ 
+                    data: { 
+                        transaction: updatedTransaction,
+                        // story: updateStory
+                    }, 
+                    error: false, 
+                    message: "success" 
+                });
+    
+            }else{
+
+                res.status(200).json({ 
+                    error: false, 
+                    message: "Transaction completed already" 
                 });
             }
 
-            res.status(200).json({ 
-                data: { 
-                    transaction: updatedTransaction,
-                    // story: updateStory
-                }, 
-                error: false, 
-                message: "success" 
-            });
+
 
         } catch (error) {
             console.error(error);
