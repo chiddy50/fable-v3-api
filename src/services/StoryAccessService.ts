@@ -189,7 +189,6 @@ export class StoryAccessService implements IStoryAccessService {
                 }
             });
             if (!accessRecord) throw new Error("No Access Record");
-            console.log({currentChapter, accessRecord});            
 
             const updateStory: any = await this.storyAccessRepo.update({
                 where: { 

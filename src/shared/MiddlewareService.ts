@@ -258,9 +258,9 @@ export class MiddlewareService implements IMiddlewareService {
 
       jwt.verify(token, JWT_SECRET, { algorithms: ['HS256'] }, async (err: any, decodedToken:  JwtPayload | string | undefined) => {
         if (err) console.log({err});
-        if (err || decodedToken === undefined) return res.status(400).json({ message: 'Invalid token' });
-        if (err) return res.status(400).json({ message: 'Token verification error' });
-        if (!decodedToken) return res.status(400).json({ message: 'Could not decode token' });
+        if (err || decodedToken === undefined) return res.status(401).json({ message: 'Invalid token' });
+        if (err) return res.status(401).json({ message: 'Token verification error' });
+        if (!decodedToken) return res.status(401).json({ message: 'Could not decode token' });
 
         const userId = (decodedToken as JwtPayload).userId;
 
@@ -275,6 +275,9 @@ export class MiddlewareService implements IMiddlewareService {
             publicId: true,            
           },
         });
+        
+        if (!auth_user) return res.status(404).json({ message: 'Unidentified User' });
+
         req.user = auth_user; // Attach user data to request
         next();
       });
