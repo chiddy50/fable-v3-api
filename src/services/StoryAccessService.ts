@@ -94,15 +94,15 @@ export class StoryAccessService implements IStoryAccessService {
                 },
             });        
             
-            if (!accessRecord) {
-                console.log("--1--");
-                
+            const grantAccess = reader.id === story.userId ? true : false;
+
+            if (!accessRecord) {                
                 const storyAccess = await this.storyAccessRepo.create({ 
                     data: {
                         userId: reader?.id,
                         storyId: story?.id,
                         currentChapter: "1",
-                        hasAccess: false,
+                        hasAccess: grantAccess,
                         updatedAt: new Date()
                     }
                 });
@@ -128,7 +128,31 @@ export class StoryAccessService implements IStoryAccessService {
 
             }else{
 
-                if (accessRecord?.hasAccess === false) {
+                if (grantAccess) {                    
+                    const updateStoryAccess = await this.storyAccessRepo.update({
+                        where: {
+                            userId_storyId: {
+                                userId: reader?.id,
+                                storyId: story?.id
+                            }
+                        },
+                        data: {
+                            hasAccess: true,
+                            updatedAt: new Date()
+                        }
+                    })
+                }         
+                
+                const accessRecordAgain: any = await this.storyAccessRepo.getUnique({
+                    where: {
+                        userId_storyId: {
+                            userId: reader?.id,
+                            storyId: story?.id
+                        }
+                    }
+                });
+
+                if (accessRecordAgain?.hasAccess === false) {
 
                     let response = await this.getUnpaidStoryVersion(story?.id);
                     res.status(200).json({ 
@@ -140,8 +164,8 @@ export class StoryAccessService implements IStoryAccessService {
                     });
                     return;
                 }
-                if (accessRecord?.hasAccess === true) {
-                console.log("--4--");
+                if (accessRecordAgain?.hasAccess === true) {
+
                     let response = await this.getPaidStoryVersion(story?.id);
                     res.status(200).json({ 
                         accessRecord,
