@@ -463,57 +463,7 @@ export class StoryService implements IStoryService {
                     ...(writeFromScratch && {
                         protagonistSuggestions: writeFromScratch?.protagonistSuggestions,
                         settingSuggestions: writeFromScratch?.settingSuggestions 
-                    }),
-                    // ...(expositionSetting && {
-                    //     exposition: expositionSetting?.exposition,
-                    //     // expositionCharacters: expositionSetting.suggestedCharacters,
-                    //     expositionSummary: expositionSetting?.expositionSummary,
-                    //     expositionSuggestions: expositionSetting?.expositionSuggestions,  
-                    // }),
-                    // ...(toneSetting && {
-                    //     introductionTone: toneSetting?.tone,
-                    //     introductionToneSuggestions: toneSetting?.toneSuggestions,              
-                    // }),
-                    // ...(stakeSetting && {
-                    //     introductionStakes: stakeSetting?.stakes,
-                    //     introductionStakesSuggestions: stakeSetting?.stakeSuggestions,
-                    // }),
-                    // ...(incitingEventSetting && {
-                    //     incitingEvent: incitingEventSetting?.incitingEvent,
-                    //     incitingEventSuggestions: incitingEventSetting?.incitingEventSuggestions,
-                    //     incitingEventSummary: incitingEventSetting?.incitingEventSummary,
-                    // }),
-                    // ...(updateIncitingEvent && {
-                    //     incitingEvent: updateIncitingEvent.incitingEvent,
-                    //     incitingEventSuggestions: updateIncitingEvent.incitingEventSuggestions,
-                    // }),
-                    // ...(protagonistOrdinaryWorld && {
-                    //     protagonistOrdinaryWorld: protagonistOrdinaryWorld.protagonistOrdinaryWorld,
-                    //     protagonistOrdinaryWorldSuggestions: protagonistOrdinaryWorld.protagonistOrdinaryWorldSuggestions,
-                    //     protagonistOrdinaryWorldSummary: protagonistOrdinaryWorld.protagonistOrdinaryWorldSummary,
-                    // }),
-                    // ...(updateProtagonistOrdinaryWorld && {
-                    //     protagonistOrdinaryWorld: updateProtagonistOrdinaryWorld.protagonistOrdinaryWorld,
-                    //     protagonistOrdinaryWorldSuggestions: updateProtagonistOrdinaryWorld.protagonistOrdinaryWorldSuggestions
-                    // }),
-                    // ...(firstPlotPoint && {
-                    //     firstPlotPoint: firstPlotPoint.firstPlotPoint,
-                    //     firstPlotPointSuggestions: firstPlotPoint.firstPlotPointSuggestions,
-                    //     firstPlotPointSummary: firstPlotPoint.firstPlotPointSummary,
-                    // }),
-                    // ...(updateFirstPlotPoint && {
-                    //     firstPlotPoint: updateFirstPlotPoint.firstPlotPoint,
-                    //     firstPlotPointSuggestions: updateFirstPlotPoint.firstPlotPointSuggestions
-                    // }),
-                    // ...(progressiveComplication && {
-                    //     progressiveComplication: progressiveComplication.progressiveComplication,
-                    //     progressiveComplicationSuggestions: progressiveComplication.progressiveComplicationSuggestions,
-                    //     progressiveComplicationSummary: progressiveComplication.progressiveComplicationSummary,
-                    // }),    
-                    // ...(updateProgressiveComplication && {
-                    //     progressiveComplication: updateProgressiveComplication.progressiveComplication,
-                    //     progressiveComplicationSuggestions: updateProgressiveComplication.progressiveComplicationSuggestions
-                    // })                
+                    }),                                    
                 }
             });
 
@@ -661,6 +611,52 @@ export class StoryService implements IStoryService {
 
         } catch (error) {
             this.errorService.handleErrorResponse(error)(res);            
+        }
+    }
+
+    public deleteStory = async (
+        req: CustomRequest,
+        res: Response
+    ): Promise<void> => {
+        const { id } = req.params;
+        try {
+            const user: IJwtPayload = req.user as IJwtPayload;    
+            
+            const story: any = await this.storyRepo.get({
+                where: {
+                    id: id,
+                    userId: user?.id
+                },
+                include: {
+                    transactions: true
+                }
+            });
+
+            console.log({transactions: story.transactions});
+            if (!story) throw new Error("Story Not Found");                  
+            
+            const transaction: any = await this.transactionRepo.get({
+                where: { 
+                    storyId: id, 
+                    type: "read-story",
+                    status: "completed"
+                },
+            });   
+
+            if(transaction) throw new Error("Cannot delete a story that has been paid for");
+            if(story.status === "published") throw new Error("Story has been published");
+
+            const storyDeleted: any = await this.storyRepo.delete({
+                where: {
+                    id: id,
+                    userId: user?.id
+                }
+            });
+
+            res.status(200).json({ error: false, message: "success" });
+
+        } catch (error) {
+            this.errorService.handleErrorResponse(error)(res);                        
         }
     }
 

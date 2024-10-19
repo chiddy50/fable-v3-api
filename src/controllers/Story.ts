@@ -28,6 +28,11 @@ StoryController.put(
     storyStructureService.editStoryStructure
 );
 
+StoryController.delete(
+    "/delete/:id", 
+    middlewareServiceFactory.verifyToken,
+    storyServiceFactory.deleteStory
+);
 
 
 StoryController.put(
