@@ -95,8 +95,10 @@ export class UserService implements IUserService {
       const users = await this.userRepo.getAll({ 
         include: {
           stories: {
-            storyStructure: true,
-            storyAccesses: true
+            include: {  // Use another 'include' here instead of direct properties
+              storyStructure: true,
+              // storyAccess: true
+            }
           },
           transactions: true,
         }
