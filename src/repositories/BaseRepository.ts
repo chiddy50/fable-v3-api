@@ -1,12 +1,15 @@
 export interface IBase {
   create(data: object): Promise<object>;
+  createMany(data: object): Promise<object>;  
   update(data: object): Promise<object>;
   delete(filter: object): Promise<object>;
+  deleteMany(filter: object): Promise<object>;  
   getUnique(filter: object): Promise<object>;
   get(filter: object): Promise<object>;
-  getAll(filter: object): Promise<Array<object>>;
+  getAll(filter?: object): Promise<Array<object>>;
   aggregate(filter: object): Promise<Array<object>>;
   count(filter: object): Promise<number>;
+  upsert(data: object): Promise<object>;
 }
 
 export class Base implements IBase {
@@ -22,6 +25,10 @@ export class Base implements IBase {
     return await this.db[this.modelName].create(data);
   };
 
+  public createMany = async (data: object): Promise<object> => {
+    return await this.db[this.modelName].createMany(data);
+  };
+  
   public update = async (data: object): Promise<object> => {
     return await this.db[this.modelName].update(data);
   };
@@ -29,6 +36,11 @@ export class Base implements IBase {
   public delete = async (filter: object): Promise<object> => {
     return await this.db[this.modelName].delete(filter);
   };
+
+  public deleteMany = async (filter: object): Promise<object> => {
+    return await this.db[this.modelName].deleteMany(filter);
+  };
+  
 
   public getUnique = async (filter: object): Promise<object> => {
     return await this.db[this.modelName].findUnique(filter);
@@ -49,4 +61,9 @@ export class Base implements IBase {
   public count = async (filter: object): Promise<number> => {
     return await this.db[this.modelName].count({ where: filter });
   };
+
+  public upsert = async (data: object): Promise<Array<object>> => {
+    return await this.db[this.modelName].upsert(data);
+  };
+
 }

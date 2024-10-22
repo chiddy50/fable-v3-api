@@ -60,16 +60,16 @@ model Story {
   suspenseTechniqueDescription  String?
   setting                       String?
 
-
   // INTRODUCTION 
   introductionLocked            Boolean? @default(false)
   genre                         String?
   genres                        Json?
   introductionTone              Json?
   introductionSetting           Json?
+  introductionCharacters        Json?
   protagonistSuggestions        Json?
   suggestedCharacters           Json?
-    introductionImage              String?
+  introductionImage             String?
 
 
   // INCITING INCIDENT
@@ -78,6 +78,7 @@ model Story {
   causeOfTheEvent String?
   stakesAndConsequences String?
   incitingIncidentTone  Json?
+  incitingIncidentCharacters  Json?
   incitingIncidentSetting Json?
   incitingIncidentExtraDetails String?
   incitingIncidentImage              String?
@@ -121,6 +122,7 @@ model Story {
   storyResolution String?
   climaxAndFallingActionSetting  Json?
   climaxAndFallingActionTone Json?
+  climaxAndFallingActionCharacters Json?
   climaxAndFallingActionExtraDetails Json?
   climaxAndFallingActionLocked Boolean? @default(false)
   climaxAndFallingActionImage String?
@@ -129,7 +131,7 @@ model Story {
   climaxConsequences String?
   howCharactersEvolve String?
   resolutionOfConflict  String?
-  // // resolutionCharacters
+  resolutionCharacters Json?
   resolutionSetting  Json?
   resolutionTone Json?
   resolutionExtraDetails Json?
@@ -137,15 +139,17 @@ model Story {
   resolutionImage String?
 
 
-
-
   paidAt                        DateTime?
   isPaid                        Boolean? @default(false)
+  isFree                        Boolean   @default(false) 
+  freeUntil                     Int       @default(2)
+  accessEnd                     Int       @default(7)
 
   publicId                      String?  @unique
   metaData                      Json?
   createdAt                     DateTime @default(now())
   publishedAt                   DateTime? 
+  updatedAt DateTime @updatedAt
 
   pages                 Page[]
   scenes                Scene[]
@@ -155,53 +159,40 @@ model Story {
   images       Image[]
 
   storyStructure StoryStructure?
-  // storySetting   StorySetting?
   // image Image?
   storyAccesses StoryAccess[]
-  // storyGenres    GenresOnStories[]
+  storyGenres    GenresOnStories[]
 
   user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([projectTitle, status, isFree])
 }
 
-// model StorySetting {
-//   id                            String  @id @default(cuid())
-//   storyId                       String  @unique
-
-//   // INCITING INCIDENT
-//   typeOfEvent String?                
-//   causeOfTheEvent String?
-//   stakesAndConsequences String?
-//   incitingIncidentTone  Json?
-//   incitingIncidentSetting String?
-
-//   story   Story @relation(fields: [storyId], references: [id], onDelete: Cascade)
-
-// }
 model StoryStructure {
   id                            String  @id @default(cuid())
   storyId                       String  @unique
   
-  protagonistGoal                 Json?
-  protagonistGoalSuggestions      Json?
+  // protagonistGoal                 Json?
+  // protagonistGoalSuggestions      Json?
 
-  whoDoesNotHaveProtagonistGoal             String?
-  whoDoesNotHaveProtagonistGoalSuggestions  Json?
+  // whoDoesNotHaveProtagonistGoal             String?
+  // whoDoesNotHaveProtagonistGoalSuggestions  Json?
   
-  protagonists                  Json?
-  protagonistSuggestions        Json?
+  // protagonists                  Json?
+  // protagonistSuggestions        Json?
 
-  protagonistGoalObstacle             Json?
-  protagonistGoalObstacleSuggestions  Json?
+  // protagonistGoalObstacle             Json?
+  // protagonistGoalObstacleSuggestions  Json?
 
-  protagonistWeaknessStrengthSuggestions  Json?
+  // protagonistWeaknessStrengthSuggestions  Json?
 
-  protagonistGoalMotivationSuggestions    Json?
+  // protagonistGoalMotivationSuggestions    Json?
 
-  settingSuggestions              Json?
-  introductionSetting            Json?
+  // settingSuggestions              Json?
+  // introductionSetting            Json?
 
-  introductionStakes            Json?
-  introductionStakesSuggestions Json?
+  // introductionStakes            Json?
+  // introductionStakesSuggestions Json?
 
 
   // STORY GENERATION ELEMENTS START
@@ -218,26 +209,26 @@ model StoryStructure {
   antagonists                  Json?
   antagonistSuggestions        Json?
 
-  antagonisticForce             Json?
+  // antagonisticForce             Json?
 
-  exposition                    Json?
-  expositionSuggestions         Json?
-  expositionCharacters          Json?
-  expositionSummary             String?
+  // exposition                    Json?
+  // expositionSuggestions         Json?
+  // expositionCharacters          Json?
+  // expositionSummary             String?
 
-  hook                          Json?
-  hookSuggestions               Json?
-  hookCharacters                Json?
-  hookSummary                   String?
+  // hook                          Json?
+  // hookSuggestions               Json?
+  // hookCharacters                Json?
+  // hookSummary                   String?
 
-  incitingEvent                 Json?
-  incitingEventSuggestions      Json?
-  incitingEventCharacters       Json?
-  incitingEventSummary          String?
+  // incitingEvent                 Json?
+  // incitingEventSuggestions      Json?
+  // incitingEventCharacters       Json?
+  // incitingEventSummary          String?
 
-  protagonistOrdinaryWorld      Json?
-  protagonistOrdinaryWorldSuggestions Json?
-  protagonistOrdinaryWorldSummary Json?
+  // protagonistOrdinaryWorld      Json?
+  // protagonistOrdinaryWorldSuggestions Json?
+  // protagonistOrdinaryWorldSummary Json?
 
   story   Story @relation(fields: [storyId], references: [id], onDelete: Cascade)
 }
@@ -267,8 +258,9 @@ model Page {
 
 model Image {
   id        String   @id @default(cuid())
-  // url       String?
+  url       String?
   image       String?
+  description       String?
   userId       String?
   storyId       String?
   source       String? // generated or uploaded
@@ -377,6 +369,7 @@ model Character {
   summary                           String?
   intelligence                      String?
   createdAt                         DateTime @default(now())
+  updatedAt DateTime @updatedAt
 
   // image Image?
 
@@ -404,6 +397,7 @@ model Transaction {
   formatAmount            Decimal?
   currency          String
   createdAt         DateTime @default(now())
+  updatedAt DateTime @updatedAt
 
   // image Image?
   story Story  @relation(fields: [storyId], references: [id], onDelete: Cascade)
@@ -428,18 +422,64 @@ model StoryAccess {
 
 
 
-// model StoryGenre {
-//   id     String      @id @default(cuid())
-//   name   String   @unique
-//   stories GenresOnStories[]
+model StoryGenre {
+  id     Int      @id @default(autoincrement())
+  name   String   @unique
+  stories GenresOnStories[]
+}
+
+model GenresOnStories {
+  id     String      @id @default(cuid())
+  storyId   String
+  storyGenreId   Int
+  story     Story    @relation(fields: [storyId], references: [id])
+  storyGenre     StoryGenre    @relation(fields: [storyGenreId], references: [id])
+  createdAt DateTime @default(now())
+
+  @@unique([storyId, storyGenreId]) // Ensures a story cannot have the same genre more than once
+}
+
+model Asset {
+  id     String      @id @default(cuid())
+  name          String    @unique
+  description   String?
+  limit         Int       // e.g., free usage limit (e.g., 3 free image generations)
+  price         Float     // price to pay after free usage is exhausted
+  transactions  AssetTransaction[]  // Relations to track purchases
+  updatedAt DateTime @updatedAt
+  createdAt     DateTime   @default(now())
+}
+
+model AssetTransaction {
+  id            String      @id @default(cuid())
+  userId        String        // Foreign key to a User model (assuming you have a User model)
+  assetId       String
+  asset         Asset      @relation(fields: [assetId], references: [id], onDelete: Cascade)
+  usageCount    Int        @default(0)  // Track how many times the asset has been used
+  totalPaid     Float      @default(0)  // Track the total amount paid for this asset
+  createdAt     DateTime   @default(now())
+  updatedAt     DateTime   @updatedAt
+
+  @@index([userId, assetId])  // Index for easy querying of usage per user per asset
+}
+
+// model Subscription {
+//   id        Int       @id @default(autoincrement())
+//   userId    Int       // The reader subscribing
+//   writerId  Int       // The writer they are subscribing to (assumed writer is a user as well)
+//   expiresAt DateTime  // When the subscription expires (next monthly renewal)
+//   createdAt DateTime  @default(now())
 // }
 
-// model GenresOnStories {
-//   storyId   String
-//   storyGenreId   String
-//   story     Story    @relation(fields: [storyId], references: [id])
-//   storyGenre     StoryGenre    @relation(fields: [storyGenreId], references: [id])
-//   createdAt DateTime @default(now())
 
-//   @@id([storyId, storyGenreId])
+// model Chapter {
+//   id            Int      @id @default(autoincrement())
+//   title         String
+//   content       String
+//   storyId       Int
+//   story         Story    @relation(fields: [storyId], references: [id], onDelete: Cascade)
+//   published     Boolean  @default(false)  // Indicates if the chapter is published
+//   releaseDate   DateTime?  // Optional field for scheduling future releases
+//   createdAt     DateTime @default(now())
+//   updatedAt     DateTime @updatedAt
 // }
