@@ -86,6 +86,32 @@ export class UserService implements IUserService {
       }
   }
 
+  public getUserData = async (
+    req: Request,
+    res: Response
+  ): Promise<void> => {
+    try {
+
+      const users = await this.userRepo.getAll({ 
+        include: {
+          stories: {
+            storyStructure: true,
+            storyAccesses: true
+          },
+          transactions: true,
+        }
+      });
+
+      res.status(200).json({ 
+        users, 
+        error: false, 
+        message: "success" 
+      });
+    } catch (error) {
+      this.errorService.handleErrorResponse(error)(res);                  
+    }
+  }
+
   public getAuthUser = async (
     req: CustomRequest,
     res: Response
