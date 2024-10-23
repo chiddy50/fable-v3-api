@@ -162,12 +162,30 @@ model Story {
   // image Image?
   storyAccesses StoryAccess[]
   storyGenres    GenresOnStories[]
+  chapters    Chapter[]
 
   user User @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   @@unique([projectTitle, status, isFree])
 }
 
+model Chapter {
+  id                            String  @id @default(cuid())
+  storyId                       String  @unique
+  index                         Int?  
+  readersHasAccess              Boolean @default(false)  
+  title                         String?  
+  description                   String?  
+  duration                      String?  
+  characters                    Json?  
+  isFree                        Boolean   @default(false) 
+  content                       String?  
+  image                         String?  
+  story       Story @relation(fields: [storyId], references: [id], onDelete: Cascade)
+  updatedAt DateTime @updatedAt
+  createdAt     DateTime @default(now())
+
+}
 model StoryStructure {
   id                            String  @id @default(cuid())
   storyId                       String  @unique
