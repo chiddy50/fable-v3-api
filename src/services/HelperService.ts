@@ -42,15 +42,19 @@ export class HelperService implements IHelperService {
         res: Response
     ): Promise<void> => {
         const { 
-            name, publicId, depositAddress, 
+            name, publicId, depositAddress, tipLink
         } = req.body;
+
+        const user_exists = await this.userRepo.getUnique({ publicId });
+        if(user_exists) throw new Error("User exists already");
     
         try {
             const user = await this.userRepo.create({
                 data: {
                     name,
                     publicId, 
-                    depositAddress           
+                    depositAddress, 
+                    tipLink           
                 },
             });
 
@@ -63,6 +67,47 @@ export class HelperService implements IHelperService {
           this.errorService.handleErrorResponse(error)(res);            
         }
 
+    }
+
+    public deleteUser = async (
+        req: Request,
+        res: Response
+    ): Promise<void> => {
+        try {
+            const { 
+                userId, 
+            } = req.body;
+            const user = await this.userRepo.delete({
+                where: { id: userId }
+            });
+
+            res.status(200).json({ 
+                user,
+                error: false, 
+                message: "success" 
+            });
+
+        } catch (error) {
+            this.errorService.handleErrorResponse(error)(res);                                    
+        }
+    }
+
+    public getUsers = async (
+        req: Request,
+        res: Response
+    ): Promise<void> => {
+        try {
+            const users = await this.userRepo.getAll();
+
+            res.status(200).json({ 
+                users,
+                error: false, 
+                message: "success" 
+            });
+
+        } catch (error) {
+            this.errorService.handleErrorResponse(error)(res);                                    
+        }
     }
 
     public updateStoryData = async (
