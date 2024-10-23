@@ -13,7 +13,9 @@ import {
   storyStructureRepository,
   transactionRepository,
   storyAccessRepository, 
-  userRepository
+  userRepository,
+  genresOnStoriesRepository,
+  storyGenreRepository
 } from "./RepositoryFactory";
 
 export const storyServiceFactory = new StoryService(
@@ -26,6 +28,8 @@ export const storyServiceFactory = new StoryService(
   plotSuggestionRepository,
   storyStructureRepository,
   transactionRepository,
+  genresOnStoriesRepository,
+  storyGenreRepository,
   authService,
   errorService
 );
