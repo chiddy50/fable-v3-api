@@ -65,7 +65,7 @@ export class HelperService implements IHelperService {
 
     }
 
-    public updateData = async (
+    public updateStoryData = async (
         req: Request,
         res: Response
     ): Promise<void> => {
