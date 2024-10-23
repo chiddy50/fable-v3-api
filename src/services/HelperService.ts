@@ -9,8 +9,10 @@ export interface IHelperService {
 
 
 export class HelperService implements IHelperService {
-    constructor(
+    constructor(        
+        private userRepo: IBase,
         private storyRepo: IBase,
+        private storyAccessRepo: IBase,        
         private characterRepo: IBase,
         private storyStructureRepo: IBase,
         private genresOnStoriesRepo: IBase,
@@ -39,8 +41,91 @@ export class HelperService implements IHelperService {
         req: Request,
         res: Response
     ): Promise<void> => {
-        const { depositAddress, name, tipLink } = req.body;
+        const { 
+            name, publicId, depositAddress, 
+        } = req.body;
+    
+        try {
+            const user = await this.userRepo.create({
+                data: {
+                    name,
+                    publicId, 
+                    depositAddress           
+                },
+            });
 
+            res.status(200).json({ 
+                user,
+                error: false, 
+                message: "success" 
+            });
+        } catch (error) {
+          this.errorService.handleErrorResponse(error)(res);            
+        }
+
+    }
+
+    public updateData = async (
+        req: Request,
+        res: Response
+    ): Promise<void> => {
+        const { 
+            name, publicId, depositAddress, storyId, userId, imageUrl, 
+            introduceProtagonistAndOrdinaryWorld,
+            incitingIncident,
+            risingActionAndMidpoint,
+            firstPlotPoint,
+            pinchPointsAndSecondPlotPoint,
+            climaxAndFallingAction,
+            resolution,
+        } = req.body;
+    
+        try {
+            const story = await this.storyRepo.update({
+                where: {
+                    id: storyId,
+                },
+                data: {
+                    ...(userId && { userId: userId } ),
+                    ...(imageUrl && { imageUrl: imageUrl } ),
+                    ...(imageUrl && { introductionImage: imageUrl } ),                        
+                },
+            });
+
+            const storyStructure = await this.storyStructureRepo.update({
+                where: { storyId: storyId },
+                data: {
+                    ...(introduceProtagonistAndOrdinaryWorld && { introduceProtagonistAndOrdinaryWorld: introduceProtagonistAndOrdinaryWorld }),
+                    ...(incitingIncident && { incitingIncident: incitingIncident }),
+                    ...(firstPlotPoint && { firstPlotPoint: firstPlotPoint } ),
+                    ...(risingActionAndMidpoint && { risingActionAndMidpoint: risingActionAndMidpoint } ),
+                    ...(pinchPointsAndSecondPlotPoint && { pinchPointsAndSecondPlotPoint: pinchPointsAndSecondPlotPoint } ),
+                    ...(climaxAndFallingAction && { climaxAndFallingAction: climaxAndFallingAction } ),
+                    ...(resolution && { resolution: resolution } ),                       
+                },
+            });
+
+            // const storyAccess = await this.storyAccessRepo.update({
+            //     where: {
+            //         id: storyId,
+            //     },
+            //     data: {
+            //         ...(userId && { userId: userId } )                        
+            //     },
+            // });
+
+            
+
+            res.status(200).json({ 
+                story,
+                storyStructure,
+                error: false, 
+                message: "success" 
+            });
+          
+        } catch (error) {
+          this.errorService.handleErrorResponse(error)(res);            
+        }
     }
 
 }

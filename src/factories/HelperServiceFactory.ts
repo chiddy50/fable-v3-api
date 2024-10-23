@@ -5,12 +5,16 @@ import {
   characterRepository,
   storyStructureRepository,
   genresOnStoriesRepository,
-  storyGenreRepository
+  storyGenreRepository,
+  userRepository,
+  storyAccessRepository
 } from "./RepositoryFactory";
 
 
 export const helperServiceFactory = new HelperService(
+  userRepository,
   storyRepository,
+  storyAccessRepository,
   characterRepository,
   storyStructureRepository,
   genresOnStoriesRepository,

@@ -173,26 +173,6 @@ export class UserService implements IUserService {
       this.errorService.handleErrorResponse(error)(res);      
     }
   }
+ 
   
-  // private createExternalUser = async (data: ZepUserPayload) => {
-    
-  //   const { email, username, user_id, publicAddress } = data
-  //   const API_KEY = process.env.ZEP_SECRET_KEY
-  //   const zep = new ZepClient({ apiKey: API_KEY });
-
-  //   const zepUserRecord = await zep.user.add({
-  //     email, 
-  //     firstName: username, 
-  //     userId: user_id,
-  //     metadata: {
-  //       publicAddress
-  //     }
-  //   });
-    
-  //   const user = await this.userRepo.update({ 
-  //     where: { id: user_id }, 
-  //     data: { publicId: zepUserRecord.id?.toString() } 
-  //   })
-  //   return user ?? false;
-  // }
 }
