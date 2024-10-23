@@ -25,27 +25,49 @@ export class StoryService implements IStoryService {
         private sceneRepo: IBase,
         private plotSuggestionRepo: IBase,
         private storyStructureRepo: IBase,     
-        private transactionRepo: IBase,     
+        private transactionRepo: IBase,    
+        private genresOnStoriesRepo: IBase,             
+        private storyGenreRepo: IBase,             
         private authService: IAuth,
         private errorService: IErrorService
     ) {}
 
     public getPublicStories = async (req: Request, res: Response): Promise<void> => {
         try {
-
-            const stories: any = await this.storyRepo.getAll({
-                where: {
-                    status: "published"
-                },
+            const { page = 1, limit, genre } = req.query;
+    
+            // Safely convert genre to a number, if it exists
+            const genreId: number | undefined = genre ? parseInt(genre as string, 10) : undefined;
+            
+            const whereClause: any = {
+                status: "published",
+            };
+    
+            // Add genre filter if genreId is valid (not NaN)
+            if (genreId) {
+                whereClause.storyGenres = {
+                    some: {
+                        storyGenreId: genreId 
+                    }
+                };
+            }
+    
+            const stories = await this.storyRepo.getAll({
+                where: whereClause,
                 select: {
                     id: true,
                     userId: true,
                     projectTitle: true,
                     projectDescription: true,
                     introductionImage: true,
-                    genres: true,
+                    storyGenres: {
+                        select: {
+                            storyGenre: true
+                        }
+                    },
                     overview: true,
                     publishedAt: true,
+                    genres: true,
                     user: {
                         select: {
                             id: true,
@@ -55,13 +77,16 @@ export class StoryService implements IStoryService {
                     }
                 }
             });
-
-            res.status(200).json({ stories, error: false, message: "success" });
-
+    
+            const genres = await this.storyGenreRepo.getAll();
+    
+            res.status(200).json({ stories, genres, error: false, message: "success" });
+    
         } catch (error) {
             this.errorService.handleErrorResponse(error)(res);            
         }
     }
+    
     
 
     public create = async (
@@ -466,6 +491,58 @@ export class StoryService implements IStoryService {
                     }),                                    
                 }
             });
+
+            if (genres) {
+                const incomingGenreIds = genres.map((genre: any) => genre.id);
+
+                // Step 1: Delete existing genres not in the incoming array
+                await this.genresOnStoriesRepo.deleteMany({
+                    where: {
+                    storyId: storyId,
+                        storyGenreId: {
+                            notIn: incomingGenreIds, // Delete genres not in the incoming genre array
+                        },
+                    },
+                });
+
+                // genres.forEach(async (genre: any) => {
+                    
+                //     const existingGenreOnStory = await this.genresOnStoriesRepo.delete({
+                //         where: {
+                //           storyId: story?.id,
+                //           storyGenreId: genre.id,
+                //         },
+                //     });
+                                        
+                //     const genreOnStory = await this.genresOnStoriesRepo.create({
+                //         data: {
+                //             storyId: story?.id,
+                //             storyGenreId: genre.id
+                //         },
+                //     });
+                // });
+
+                // Step 2: Add the incoming genres to the story
+                for (const genre of genres) {
+                    // Check if the genre is already connected to the story to avoid duplicates
+                    const existingGenreOnStory = await this.genresOnStoriesRepo.get({
+                        where: {
+                            storyId: story?.id,
+                            storyGenreId: genre?.id,
+                        },
+                    });
+
+                    // If not already connected, create the connection
+                    if (!existingGenreOnStory) {
+                        await this.genresOnStoriesRepo.create({
+                            data: {
+                                storyId: story?.id,
+                                storyGenreId: genre.id,
+                            },
+                        });
+                    }
+                }
+            }
 
             if (addProtagonist?.protagonists) {
                 await this.createCharacters(addProtagonist?.protagonists, id, user?.id);                                    
