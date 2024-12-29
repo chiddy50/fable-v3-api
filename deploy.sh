@@ -30,6 +30,9 @@ docker compose up -d node-api
 echo "waiting for health status"
 sleep 15
 
+echo "Restarting NGINX"
+systemctl restart nginx
+
 echo "Checking Docker services status..."
 docker compose ps --format "table {{.Name}}\t{{.Status}}\t{{.Ports}}"
 
