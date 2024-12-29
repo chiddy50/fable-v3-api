@@ -110,7 +110,12 @@ export class AuthenticationService implements IAuthenticationService {
             if (!auth_user) {
                 auth_user = await this.userRepo.create({
                     data: {
-                        publicId: userId,                    
+                        publicId: userId,   
+                        socialMedia: {
+                            create: {
+                                x: null
+                            } // This will create a social media record with all nullable fields set to null
+                        }                                     
                     },
                     select: {
                         id: true,

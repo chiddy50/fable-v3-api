@@ -7,17 +7,18 @@ import {
   storyStructureRepository,
   transactionRepository,
   storyAccessRepository,
+  paymentRepository,
   userRepository
 } from "./RepositoryFactory";
 
 export const transactionServiceFactory = new TransactionService(
     transactionRepository,
     storyAccessRepository,
+    paymentRepository,
     userRepository,
     storyRepository,
     characterRepository,
     storyStructureRepository,
-    authService,
     errorService
 );
 

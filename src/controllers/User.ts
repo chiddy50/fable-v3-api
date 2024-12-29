@@ -6,6 +6,7 @@ import { middlewareServiceFactory } from "../factories/MiddleServiceFactory";
 const UserController: Router = express.Router();
 UserController.post("/", userServiceFactory.register);
 UserController.get("/get-data", userServiceFactory.getUserData);
+UserController.get("/:id", userServiceFactory.getUser);
 
 
 UserController.put("/", 

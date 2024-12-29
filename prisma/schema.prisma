@@ -18,32 +18,89 @@ model User {
   email                String?   @unique
   emailVerified        DateTime?
   name                 String?
+  gender               String?
+  firstName            String?
+  lastName             String?
+  bio                  String?
   publicId             String?   @unique
   primaryWalletAddress String?
   publicKey            String?
   depositAddress       String? 
   tipLink              String? 
-  createdAt            DateTime  @default(now())
-  stories              Story[]
-  transactions         Transaction[]
-  storyAccesses StoryAccess[]
-  images       Image[]
+  imageUrl             String?
+  backgroundImage      String?
+
+  averageRating   Float?    
+  totalRatings    Int       @default(0)
+
+  updatedAt             DateTime @updatedAt
+  createdAt             DateTime  @default(now())
+
+  articles                Article[]
+  articleLikes            ArticleLike[]
+  articleComments         ArticleComment[]      
+  storyComments           StoryComment[]      
+
+  stories                 Story[]
+  transactions            Transaction[]
+  articleTransactions     ArticleTransaction[]
+  storyAccesses           StoryAccess[]
+  articleAccesses         ArticleAccess[]
+  images                  Image[]
+  payments                Payment[]
+  articleRatings          ArticleRating[]
+  storyRatings            StoryRating[]
+  socialMedia             SocialMedia?   // One-to-one relation
+
+  @@index([name])
+  @@index([totalRatings])
+  @@index([averageRating])
+  @@index([gender])
+  @@index([firstName, lastName])
+  @@index([createdAt])
+  @@index([primaryWalletAddress])
+}
+
+model SocialMedia {
+  id               String    @id @default(cuid())
+  userId           String    @unique    // Foreign key
+  user             User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  x                String?
+  instagram        String?
+  discord          String?
+  tiktok           String?
+  facebook         String?
+  youtube          String?   
+  linkedin         String?
+  github           String?
+  website          String?
+
+  updatedAt        DateTime  @updatedAt
+  createdAt        DateTime  @default(now())
+
+  @@index([instagram])
+  @@index([x])
 }
 
 model Story {
   id                            String   @id @default(cuid())
   userId                        String
   projectTitle                  String?
-  projectDescription            String?
+  projectDescription            String? @db.Text
   title                         String?
-  slug                          String?
+  slug                          String? @unique
 
   imageUrl                      String?
+  imageStatus                   String?
+  imageId                       String?
+
   type                          String?
-  overview                      String?
+  overview                      String? @db.Text
   
   writingStep                   Int? @default(1)
   duration                      String?
+  averageRating   Float?    
+  totalRatings    Int       @default(0)
 
   currentPlotStep               Int? @default(1)
   introductionStep              Int? @default(1)
@@ -142,6 +199,7 @@ model Story {
   paidAt                        DateTime?
   isPaid                        Boolean? @default(false)
   isFree                        Boolean   @default(false) 
+  price                         Float?
   freeUntil                     Int       @default(2)
   accessEnd                     Int       @default(7)
 
@@ -156,22 +214,41 @@ model Story {
   characters            Character[]
   plotSuggestions       PlotSuggestion[]
   transactions       Transaction[]
-  images       Image[]
 
   storyStructure StoryStructure?
   // image Image?
   storyAccesses StoryAccess[]
   storyGenres    GenresOnStories[]
   chapters    Chapter[]
+  assetTransactions AssetTransaction[]
+  ratings     StoryRating[]
+  comments        StoryComment[]
+
 
   user User @relation(fields: [userId], references: [id], onDelete: Cascade)
 
-  @@unique([projectTitle, status, isFree])
+  // @@unique([projectTitle, status, isFree])
+  // Primary indices for common query patterns
+  @@index([userId, publishedAt])              // User's stories timeline
+  @@index([type, publishedAt])               // Type filtering with chronological order
+  @@index([isPaid, isFree, publishedAt])     // Payment status filtering
+  @@index([writingStep, updatedAt])          // Progress tracking
+  
+  // Search optimization indices
+  @@index([projectTitle])                     // Project search
+  @@index([title])                           // Title search
+  
+  // Composite indices for filtered searches
+  @@index([type, status, publishedAt])       // Status-based filtering
+  @@index([price, publishedAt])              // Price-based queries
+
+  // Unique constraint for business logic
+  @@unique([projectTitle, status, isFree], name: "unique_project_status")
 }
 
 model Chapter {
   id                            String  @id @default(cuid())
-  storyId                       String  @unique
+  storyId                       String
   index                         Int?  
   readersHasAccess              Boolean @default(false)  
   title                         String?  
@@ -181,6 +258,11 @@ model Chapter {
   isFree                        Boolean   @default(false) 
   content                       String?  
   image                         String?  
+  paywall                       Boolean  @default(false)
+  status                        String?  
+  publishedAt                   DateTime?  // Indicates if the chapter is published
+  releaseDate                   DateTime?  // Optional field for scheduling future releases
+
   story       Story @relation(fields: [storyId], references: [id], onDelete: Cascade)
   updatedAt DateTime @updatedAt
   createdAt     DateTime @default(now())
@@ -223,6 +305,13 @@ model StoryStructure {
   resolution  String?
   // STORY GENERATION ELEMENTS END
 
+  introductionSummary String?
+  incitingIncidentSummary            String?
+  firstPlotPointSummary  String?
+  risingActionAndMidpointSummary String?
+  pinchPointsAndSecondPlotPointSummary String?
+  climaxAndFallingActionSummary  String?
+  resolutionSummary  String?
 
   antagonists                  Json?
   antagonistSuggestions        Json?
@@ -275,29 +364,24 @@ model Page {
 }
 
 model Image {
-  id        String   @id @default(cuid())
-  url       String?
-  image       String?
+  id                String   @id @default(cuid())
+  ownerId           String   // ID of the associated entity (Story or Article)
+  ownerType         String   // Type of the associated entity ('Story', 'Article')
+  userId            String?
+  url               String?
+  image             String?
+  imageStatus       String?
+  publicId          String?
+  signature         String?
   description       String?
-  userId       String?
-  storyId       String?
+  meta              Json?
+
   source       String? // generated or uploaded
-  paidAt       String?
+  origin       String? // cloudinary or aws
   createdAt DateTime @default(now())
   user   User?  @relation(fields: [userId], references: [id])
-  story   Story?  @relation(fields: [storyId], references: [id])
 
-  // storyId String? @unique
-  // story   Story?  @relation(fields: [storyId], references: [id])
-
-  // pageId String? @unique
-  // page   Page?   @relation(fields: [pageId], references: [id])
-
-  // characterId String?    @unique
-  // character   Character? @relation(fields: [characterId], references: [id])
-
-  // sceneId String? @unique
-  // scene   Scene?  @relation(fields: [sceneId], references: [id])
+  @@index([ownerId, ownerType]) // Optimize lookups by entity
 }
 
 model Scene {
@@ -409,10 +493,10 @@ model Transaction {
   confirmedAt       DateTime? 
   usedAt            DateTime? 
 
-  type              String // create-story, read-story
+  type              String // create-story, read-story, generate-image, tip
   status            String //initiated, pending, completed, failed, abandoned
   amount            String
-  formatAmount            Decimal?
+  formatAmount            Float?
   currency          String
   createdAt         DateTime @default(now())
   updatedAt DateTime @updatedAt
@@ -420,6 +504,11 @@ model Transaction {
   // image Image?
   story Story  @relation(fields: [storyId], references: [id], onDelete: Cascade)
   user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([type])
+  @@index([status])
+  @@index([userId])
+  @@index([storyId])
 }
 
 model StoryAccess {
@@ -438,11 +527,10 @@ model StoryAccess {
   @@unique([userId, storyId]) // Ensure a user can't have duplicate records for the same story
 }
 
-
-
 model StoryGenre {
   id     Int      @id @default(autoincrement())
   name   String   @unique
+  description String?
   stories GenresOnStories[]
 }
 
@@ -461,6 +549,7 @@ model Asset {
   id     String      @id @default(cuid())
   name          String    @unique
   description   String?
+  code          String?   @unique
   limit         Int       // e.g., free usage limit (e.g., 3 free image generations)
   price         Float     // price to pay after free usage is exhausted
   transactions  AssetTransaction[]  // Relations to track purchases
@@ -470,15 +559,276 @@ model Asset {
 
 model AssetTransaction {
   id            String      @id @default(cuid())
-  userId        String        // Foreign key to a User model (assuming you have a User model)
+  description   String?     
+  reference     String?     
+  userId        String     
+  storyId       String?     
   assetId       String
-  asset         Asset      @relation(fields: [assetId], references: [id], onDelete: Cascade)
+  isFree        Boolean    @default(false)
   usageCount    Int        @default(0)  // Track how many times the asset has been used
   totalPaid     Float      @default(0)  // Track the total amount paid for this asset
+
+  story         Story? @relation(fields: [storyId], references: [id], onDelete: Cascade)
+  asset         Asset      @relation(fields: [assetId], references: [id], onDelete: Cascade)
   createdAt     DateTime   @default(now())
   updatedAt     DateTime   @updatedAt
 
   @@index([userId, assetId])  // Index for easy querying of usage per user per asset
+}
+
+model Article {
+  id            String      @id @default(cuid())
+  userId        String     
+  title         String
+  slug          String  @unique
+  content       Json?
+  excerpt       String?
+  type       String? // tiptap, editorJs, novel
+  coverImage       String?
+  likeCount       Int?  @default(0)
+  isPaid      Boolean        @default(false)
+  paidAt                        DateTime?
+  publishedAt                   DateTime? 
+  isFree                        Boolean   @default(false) 
+  price      Float?
+  averageRating   Float?    
+  totalRatings    Int       @default(0)
+
+  createdAt     DateTime   @default(now())
+  updatedAt     DateTime   @updatedAt
+
+  likes           ArticleLike[]
+  comments        ArticleComment[]
+  articleTags      TagsOnArticle[]
+  transactions    ArticleTransaction[]
+  articleAccesses ArticleAccess[]
+  ratings     ArticleRating[]
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  // Primary access pattern indices
+  @@index([publishedAt(sort: Desc), isPaid, isFree])  // For listing articles with payment status
+  @@index([userId, publishedAt(sort: Desc)])          // For user's articles timeline
+  @@index([type, publishedAt(sort: Desc)])           // For filtering by type with timeline
+  
+  // Secondary access pattern indices
+  @@index([price, publishedAt(sort: Desc)])          // For price-based filtering
+  @@index([likeCount(sort: Desc), publishedAt])      // For popularity-based queries
+
+  // Full-text search index (if using PostgreSQL)
+  // @@fulltext([title, excerpt])  // Uncomment if using PostgreSQL 12+
+}
+
+model ArticleLike {
+  id            String      @id @default(cuid())
+  articleId String
+  userId    String
+  article   Article  @relation(fields: [articleId], references: [id])
+  user      User     @relation(fields: [userId], references: [id])
+  createdAt DateTime @default(now())
+  updatedAt     DateTime   @updatedAt
+
+  @@unique([articleId, userId]) // Ensures a user can only like an article once
+  @@index([userId])
+  @@index([articleId])
+}
+
+model ArticleAccess {
+  id        String   @id @default(cuid())
+  userId    String
+  articleId   String
+  hasAccess Boolean  @default(false)
+
+  updatedAt DateTime @updatedAt
+  createdAt DateTime @default(now())
+
+  user      User     @relation(fields: [userId], references: [id])
+  article     Article    @relation(fields: [articleId], references: [id])
+
+  @@unique([userId, articleId]) // Ensure a user can't have duplicate records for the same story
+}
+
+model Tag {
+  id        String    @id @default(cuid())
+  title   String @unique
+  description   String?
+  createdAt DateTime  @default(now())
+  updatedAt DateTime  @updatedAt
+
+  article TagsOnArticle[]
+}
+
+model TagsOnArticle {
+  id              String      @id @default(cuid())
+  articleId       String
+  tagId           String
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime  @updatedAt
+
+  article         Article    @relation(fields: [articleId], references: [id])
+  articleTag      Tag    @relation(fields: [tagId], references: [id])
+
+  @@unique([articleId, tagId]) // Ensures a story cannot have the same genre more than once
+}
+
+
+// model Comment {
+//   id        String    @id @default(cuid())
+//   content   String
+//   articleId String
+//   article   Article   @relation(fields: [articleId], references: [id])
+//   userId    String
+//   user      User      @relation(fields: [userId], references: [id])
+//   createdAt DateTime  @default(now())
+//   updatedAt DateTime  @updatedAt
+
+//   @@index([articleId])
+//   @@index([userId])
+// }
+
+model ArticleComment {
+  id          String    @id @default(cuid())
+  content     String
+  articleId   String
+  userId      String
+  parentId    String?   
+
+  article     Article   @relation(fields: [articleId], references: [id])
+  user        User      @relation(fields: [userId], references: [id])
+  
+  parent      ArticleComment?  @relation(name: "ArticleCommentReplies", fields: [parentId], references: [id], onDelete: Cascade) 
+  replies     ArticleComment[] @relation(name: "ArticleCommentReplies") // Self-referencing relationship for replies
+  
+  // Additional fields that might be useful
+  isEdited  Boolean   @default(false)
+  replyCount Int      @default(0)     // Cache the number of replies
+
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+
+  @@index([articleId])
+  @@index([userId])
+  @@index([parentId]) // Needed for efficient reply lookups
+}
+
+model StoryComment {
+  id          String    @id @default(cuid())
+  content     String
+  storyId     String
+  story       Story   @relation(fields: [storyId], references: [id])
+  userId      String
+  user        User      @relation(fields: [userId], references: [id])
+  
+  parentId    String?   
+  parent      StoryComment?  @relation(name: "StoryCommentReplies", fields: [parentId], references: [id], onDelete: Cascade) 
+  replies     StoryComment[] @relation(name: "StoryCommentReplies") // Self-referencing relationship for replies
+  
+  // Additional fields that might be useful
+  isEdited  Boolean   @default(false)
+  replyCount Int      @default(0)     // Cache the number of replies
+
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+
+  @@index([storyId])
+  @@index([userId])
+  @@index([parentId]) // Needed for efficient reply lookups
+}
+
+
+model ArticleTransaction {
+  id                String   @id @default(cuid())
+  articleId         String
+  userId            String
+  reference         String  @unique
+  key               String  @unique // intentId or clientSecret
+  unique_id         String  @unique
+  deposit_address   String
+
+  locale            String?
+  mode              String?
+  narration         String?
+  confirmedAt       DateTime? 
+
+  type              String // create-article, read-article, generate-image, 
+  status            String //initiated, pending, completed, failed, abandoned
+  amount            String
+  formatAmount      Float?
+  currency          String
+  createdAt         DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  // image Image?
+  article Article  @relation(fields: [articleId], references: [id], onDelete: Cascade)
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([type])
+  @@index([status])
+  @@index([userId])
+  @@index([articleId])
+}
+
+model Payment {
+  id                String   @id @default(cuid())
+  userId            String
+  reference         String  @unique
+  key               String?  @unique // intentId or clientSecret
+  unique_id         String?  @unique
+  deposit_address   String?
+
+  locale            String?
+  mode              String?
+  narration         String?
+  confirmedAt       DateTime? 
+
+  type              String? // create-story, read-story, generate-image, tip
+  status            String? //initiated, pending, completed, failed, abandoned
+  amount            String
+  formatAmount      Float?
+  currency          String
+  createdAt         DateTime @default(now())
+  updatedAt         DateTime @updatedAt
+
+  // image Image?
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([type])
+  @@index([status])
+  @@index([userId])
+}
+
+model ArticleRating {
+  id                String   @id @default(cuid())
+  articleId String
+  userId    String
+  rating    Int      @db.SmallInt
+  review    String?  // Optional text review
+
+  article   Article  @relation(fields: [articleId], references: [id])
+  user      User     @relation(fields: [userId], references: [id])
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@unique([userId, articleId]) // Ensures one rating per user per article
+  @@index([articleId])
+  @@index([rating]) // Useful for querying articles by rating
+}
+
+model StoryRating {
+  id                String   @id @default(cuid())
+  rating    Int      @db.SmallInt
+  review    String?  // Optional text review
+  userId    String
+  storyId   String
+  
+  user      User     @relation(fields: [userId], references: [id])
+  story     Story    @relation(fields: [storyId], references: [id])
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@unique([userId, storyId]) // Ensures one rating per user per story
+  @@index([storyId])
+  @@index([rating]) // Useful for querying articles by rating
 }
 
 // model Subscription {
