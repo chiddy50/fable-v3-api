@@ -11,23 +11,18 @@ import { CreateTransactionInterface } from "../interfaces/TransactionInterface";
 import { v4 as uuidv4 } from 'uuid';
 const _ = require('lodash');
 
-export interface ITransactionService {
+export interface IArticleTransactionService {
     createIntent(req: Request, res: Response): Promise<void>; 
-    verifyIntent(req: Request, res: Response): Promise<void>;  
-    webhook(req: Request, res: Response): Promise<void>;         
 }
 
-export class TransactionService implements ITransactionService {
-
-    constructor(        
-        private transactionRepo: IBase,
-        private storyAccessRepo: IBase,  
+export class ArticleTransactionService implements IArticleTransactionService {
+    constructor(    
+        private articleTransactionRepo: IBase,
+        private articleRepo: IBase,
         private paymentRepo: IBase,        
+        private articleAccessRepo: IBase,    
         private userRepo: IBase,                
-        private storyRepo: IBase,
-        private characterRepo: IBase,
-        private storyStructureRepo: IBase,        
-        private errorService: IErrorService
+        private errorService: IErrorService,
     ) {}
 
     public createIntent = async (
@@ -36,20 +31,19 @@ export class TransactionService implements ITransactionService {
     ): Promise<void> => {
 
         const { id } = req.params;
-        const { narration, type, depositAddress } = req.body;
+        const { narration, type, depositAddress, customPrice } = req.body;
 
         const user: IJwtPayload = req.user as IJwtPayload; 
         
         if (!user?.id) throw new Error("User Not Found");        
-        if ((type === "read-story" || type === "read-article") && !depositAddress) throw new Error("No deposit address found");        
+        if (type === "read-article" && !depositAddress) throw new Error("No deposit address found");        
 
         const storyId = id;
-        const amount = type === "read-story" ? 0.05 : 0.25;
-        console.log({amount});
+        const amount = type === "read-article" ? customPrice : 0.5;
         
         const currency = 'usd';
 
-        const deposit_address = (type === "create-story" || type === "create-article") ? process.env.CODE_WALLET_DEPOSIT_ADDRESS : depositAddress;
+        const deposit_address = type === "create-article" ? process.env.CODE_WALLET_DEPOSIT_ADDRESS : depositAddress;
 
         try {
             const { clientSecret, id } = await code.paymentIntents.create({
@@ -57,12 +51,7 @@ export class TransactionService implements ITransactionService {
                 currency,
                 destination: deposit_address,
                 mode: "payment",
-                // idempotencyKey: `${storyId}`,
-                // webhook: { url: "https://tions-put-teaching-qty.trycloudflare.com/transactions/webhook" },
-            });
-            
-            // The id value can also be used to query the status of the payment intent manually
-            console.log('Created intent', id);
+            });            
 
             // Save transaction record
             let transaction = await this.createTransaction(storyId, {
@@ -75,14 +64,6 @@ export class TransactionService implements ITransactionService {
                 userId: user?.id,
                 id: id.toString(),
             });
-
-            // const { success, message } = await code.webhook.register({
-            //     intent: id,
-            //     // url: process.env.WEBHOOK_URL ?? "",
-            //     url: "https://quick-knowing-downtown-flow.trycloudflare.com"
-            // });
-        
-            // console.log('Registered webhook', success, message);
 
             res.status(200).json({ 
                 clientSecret, id,
@@ -101,11 +82,11 @@ export class TransactionService implements ITransactionService {
     ): Promise<void> => {
         try {
             const { id } = req.params;
-            const { storyId } = req.body;
+            const { articleId } = req.body;
 
             // VALIDATE STORY FIRST
 
-            const transaction = await this.handleIntentValidation(id, storyId);
+            const transaction = await this.handleIntentValidation(id, articleId);
 
             if (!transaction) throw new Error("Transaction Not Found");
 
@@ -130,40 +111,30 @@ export class TransactionService implements ITransactionService {
     ): Promise<void> => {
         try {
             const { id } = req.params;
-            const { storyId, clientSecret, destination, locale, mode, type } = req.body;
+            const { articleId, clientSecret, destination, locale, mode, type } = req.body;
             const user: IJwtPayload = req.user as IJwtPayload;    
 
             const authUser = await this.userRepo.getUnique({ where: { id: user?.id } }) as User | null;
 
-            console.log({ 
-                unique_id: id, 
-                storyId, 
-                key: clientSecret,
-                deposit_address: destination
-            });
-            
-            const transaction: any = await this.transactionRepo.get({
+            const transaction: any = await this.articleTransactionRepo.get({
                 where: { 
                     // unique_id: id, 
-                    storyId, 
+                    articleId, 
                     key: clientSecret,
                     deposit_address: destination
                 },
             });
-            console.log({transaction});
             
-            if (!transaction) {
-                throw new Error("Could not update transaction")
-            }
+            if (!transaction) throw new Error("Unidentified transaction");
 
             if (transaction.status !== "completed") {
-
-                const updatedTransaction: any = await this.transactionRepo.update({
+                
+                const updatedTransaction: any = await this.articleTransactionRepo.update({
                     where: { 
                         id: transaction.id,
                         // unique_id: id, 
                         deposit_address: destination,
-                        storyId 
+                        articleId 
                     },
                     data: {
                         status: "completed",
@@ -171,12 +142,12 @@ export class TransactionService implements ITransactionService {
                         mode,
                         confirmedAt: new Date(),
                     }
-                });
+                });                
     
-                if (updatedTransaction?.type === "create-story") {                
-                    const updateStory: any = await this.storyRepo.update({
+                if (updatedTransaction?.type === "create-article") {                
+                    const updateArticle: any = await this.articleRepo.update({
                         where: { 
-                            id: storyId,
+                            id: articleId,
                             userId: user?.id,   
                         },
                         data: {
@@ -186,11 +157,11 @@ export class TransactionService implements ITransactionService {
                     });
                 }
     
-                if (type === "read-story") {                
-                    const storyAccess = await this.storyAccessRepo.update({ 
+                if (type === "read-article") {                
+                    const articleAccess = await this.articleAccessRepo.update({ 
                         where: { 
-                            userId_storyId: {
-                                storyId: storyId,
+                            userId_articleId: {
+                                articleId: articleId,
                                 userId: user?.id,  
                             },
                             // id: storyId,
@@ -236,11 +207,11 @@ export class TransactionService implements ITransactionService {
         const { id } = req.params;
 
         try {
-            const transaction: any = await this.transactionRepo.get({
+            const transaction: any = await this.articleTransactionRepo.get({
                 where: { unique_id: id },
             });
 
-            const deleted = await this.transactionRepo.delete({ where: { unique_id: id } });
+            const deleted = await this.articleTransactionRepo.delete({ where: { unique_id: id } });
 
             if(!deleted){
                 throw new Error("Could not remove transaction")
@@ -248,7 +219,7 @@ export class TransactionService implements ITransactionService {
 
             res.status(200).json({ 
                 data: { 
-                    story: deleted
+                    transaction: deleted
                 }, 
                 error: false, 
                 message: "success" 
@@ -269,8 +240,7 @@ export class TransactionService implements ITransactionService {
         const token: string = req.body;
 
         console.log('Received webhook event:');
-        console.log({body: req.body});
-        
+        console.log({body: req.body});        
 
         try {
             const publicKey = config.codeSequencerPublicKey;
@@ -299,10 +269,10 @@ export class TransactionService implements ITransactionService {
             const parsedPage: number = parseInt(page as string, 10); 
             const parsedLimit: number = parseInt(limit as string, 10); 
             let filter: object = { userId: user?.id };
-            const totalCount: number = await this.transactionRepo.count(filter); // Assuming you have a method to count total challenges
+            const totalCount: number = await this.articleTransactionRepo.count(filter); // Assuming you have a method to count total challenges
             const offset = (parsedPage - 1) * parsedLimit;
             
-            const transactions = await this.transactionRepo.getAll({ 
+            const transactions = await this.articleTransactionRepo.getAll({ 
                 where: {
                     userId: user?.id
                 },
@@ -313,50 +283,50 @@ export class TransactionService implements ITransactionService {
                 take: Number(limit),
             });
 
-            const createdStoryCompletedTransactions = await this.transactionRepo.getAll({ 
+            const createdArticleCompletedTransactions = await this.articleTransactionRepo.getAll({ 
                 where: {
                     userId: user?.id,
                     status: "completed",
-                    type: "create-story"
+                    type: "create-article"
                 },
                 select: {
                     amount: true,
                 },
             });
 
-            const readStoryCompletedTransactions = await this.transactionRepo.getAll({ 
+            const readArticleCompletedTransactions = await this.articleTransactionRepo.getAll({ 
                 where: {
                     userId: user?.id,
                     status: "completed",
-                    type: "read-story"
+                    type: "read-article"
                 },
                 select: {
                     amount: true,
                 },
             });
 
-            const createdStoryTotalAmount = createdStoryCompletedTransactions.reduce((sum, transaction: any) => {
+            const createdArticleTotalAmount = createdArticleCompletedTransactions.reduce((sum, transaction: any) => {
                 const amountAsNumber = parseFloat(transaction?.amount);
                 return sum + (isNaN(amountAsNumber) ? 0 : amountAsNumber);
             }, 0);
 
-            const readStoryTotalAmount = readStoryCompletedTransactions.reduce((sum, transaction: any) => {
+            const readArticleTotalAmount = readArticleCompletedTransactions.reduce((sum, transaction: any) => {
                 const amountAsNumber = parseFloat(transaction?.amount);
                 return sum + (isNaN(amountAsNumber) ? 0 : amountAsNumber);
             }, 0);
 
-            const creatorStoriesThatHaveBeenRead: any = await this.transactionRepo.aggregate({
+            const creatorArticlesThatHaveBeenRead: any = await this.articleTransactionRepo.aggregate({
                 _sum: {
                     formatAmount: true, // Sum the 'amount' field
                 },
                 where: {
-                  type: "read-story", // Only transactions where users read your story
-                  story: {
-                    userId: user?.id, // Only consider transactions for stories that belong to you
-                  },
+                    type: "read-article", // Only transactions where users read your article
+                    article: {
+                        userId: user?.id, 
+                    },
                 },
             });
-            const amountEarned = creatorStoriesThatHaveBeenRead?._sum?.formatAmount || 0;
+            const amountEarned = creatorArticlesThatHaveBeenRead?._sum?.formatAmount || 0;
 
 
             const totalPages: number = Math.ceil(totalCount / parsedLimit);
@@ -367,10 +337,10 @@ export class TransactionService implements ITransactionService {
                 totalPages, hasNextPage, hasPrevPage,
                 amountEarned: Number(amountEarned?.toFixed(2)),
                 transactions,
-                createdStoryTotalAmount: createdStoryTotalAmount,
-                readStoryTotalAmount: readStoryTotalAmount,
-                createdStoryCompletedTransactionsCount: createdStoryCompletedTransactions.length,
-                readStoryCompletedTransactionsCount: readStoryCompletedTransactions.length,
+                createdArticleTotalAmount: createdArticleTotalAmount,
+                readArticleTotalAmount: readArticleTotalAmount,
+                createdArticleCompletedTransactionsCount: createdArticleCompletedTransactions.length,
+                readArticleCompletedTransactionsCount: readArticleCompletedTransactions.length,
                 error: false, 
                 message: "success" 
             });
@@ -380,10 +350,10 @@ export class TransactionService implements ITransactionService {
         }
     }
 
-    createTransaction = async(storyId: string, payload: CreateTransactionInterface) => {
-        const transaction = await this.transactionRepo.create({ 
+    createTransaction = async(articleId: string, payload: CreateTransactionInterface) => {
+        const transaction = await this.articleTransactionRepo.create({ 
             data: {
-                storyId,       
+                articleId,       
                 status: "initiated",          
                 userId: payload.userId,
                 type: payload.type,          
@@ -399,12 +369,11 @@ export class TransactionService implements ITransactionService {
         });
     }
     
-
-    async handleIntentValidation(intent: string, storyId: string) {
+    async handleIntentValidation(intent: string, articleId: string) {
         if (!intent) return null;
     
-        const transaction: any = await this.transactionRepo.get({
-            where: { unique_id: intent, storyId },
+        const transaction: any = await this.articleTransactionRepo.get({
+            where: { unique_id: intent, articleId },
         });
 
         if (!transaction) return null;
@@ -415,7 +384,7 @@ export class TransactionService implements ITransactionService {
             
             if (status === 'confirmed') {
             // UPDATE TRANSACTION AFTER CONFIRMATION
-                const updatedTransaction: any = await this.transactionRepo.update({
+                const updatedTransaction: any = await this.articleTransactionRepo.update({
                     where: { unique_id: intent },
                     data: {
                         status: "completed"
@@ -431,26 +400,31 @@ export class TransactionService implements ITransactionService {
     }
 
     createPayment = async (transaction: any) => {
-        const payment = await this.paymentRepo.create({
-            data: {
-                status: "completed",          
-                userId: transaction?.userId,
-                type: transaction?.type,          
-                narration: transaction?.narration,
-                amount: transaction?.amount,    
-                formatAmount: parseFloat(transaction?.amount),
-                currency: transaction?.currency,
-                deposit_address: transaction?.deposit_address,      
-                key: transaction?.clientSecret,
-                unique_id: transaction?.id,
-                locale: transaction?.locale,
-                mode: transaction?.mode,
-                confirmedAt: transaction?.confirmedAt,            
-                reference: transaction?.reference
-            }
-        });
-
-        console.log({payment});        
+        console.log({transaction});
+        try {
+            
+            const payment = await this.paymentRepo.create({
+                data: {
+                    status: "completed",          
+                    userId: transaction?.userId,
+                    type: transaction?.type,          
+                    narration: transaction?.narration,
+                    amount: transaction?.amount,    
+                    formatAmount: parseFloat(transaction?.amount),
+                    currency: transaction?.currency,
+                    deposit_address: transaction?.deposit_address,      
+                    key: transaction?.key,
+                    unique_id: transaction?.id,
+                    locale: transaction?.locale,
+                    mode: transaction?.mode,
+                    confirmedAt: transaction?.confirmedAt,            
+                    reference: transaction?.reference
+                }
+            });
+            console.log({payment});
+            
+        } catch (error) {
+            console.error(error);            
+        }
     }
-    
-}   
+}

@@ -55,8 +55,11 @@ export class MiddlewareService implements IMiddlewareService {
             name: true,
             email: true,            
             publicId: true,            
+            imageUrl: true,            
+            depositAddress: true,            
+            tipLink: true,            
           },
-        });
+        });        
         
         if (!auth_user) return res.status(404).json({ message: 'Unidentified User' });
 

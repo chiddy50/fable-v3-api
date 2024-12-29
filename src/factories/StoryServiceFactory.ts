@@ -15,7 +15,10 @@ import {
   storyAccessRepository, 
   userRepository,
   genresOnStoriesRepository,
-  storyGenreRepository
+  storyGenreRepository,
+  assetRepository,
+  assetTransactionRepository,
+
 } from "./RepositoryFactory";
 
 export const storyServiceFactory = new StoryService(
@@ -30,6 +33,8 @@ export const storyServiceFactory = new StoryService(
   transactionRepository,
   genresOnStoriesRepository,
   storyGenreRepository,
+  assetRepository,
+  assetTransactionRepository,
   authService,
   errorService
 );

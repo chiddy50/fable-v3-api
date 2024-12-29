@@ -11,6 +11,19 @@ import { TransactionRepository } from "../repositories/TransactionRepository";
 import { StoryAccessRepository } from "../repositories/StoryAccessRepository";
 import { StoryGenreRepository } from "../repositories/StoryGenreRepository";
 import { GenresOnStoriesRepository } from "../repositories/GenresOnStoriesRepository";
+import { AssetRepository } from "../repositories/AssetRepository";
+import { AssetTransactionRepository } from "../repositories/AssetTransactionRepository";
+import { ArticleRepository } from "../repositories/ArticleRepository";
+import { ArticleAccessRepository } from "../repositories/ArticleAccessRepository";
+import { ArticleTransactionRepository } from "../repositories/ArticleTransactionRepository";
+import { PaymentRepository } from "../repositories/PaymentRepository";
+import { ArticleCommentRepository } from "../repositories/ArticleCommentRepository";
+import { ArticleLikeRepository } from "../repositories/ArticleLikeRepository";
+import { ArticleRatingRepository } from "../repositories/ArticleRatingRepository";
+import { StoryRatingRepository } from "../repositories/StoryRatingRepository";
+import { TagRepository } from "../repositories/TagRepository";
+import { TagsOnArticleRepository } from "../repositories/TagsOnArticleRepository";
+import { ChapterRepository } from "../repositories/ChapterRepository";
 
 const prisma: any = new PrismaClient();
 
@@ -26,3 +39,17 @@ export const transactionRepository = new TransactionRepository(prisma);
 export const storyAccessRepository = new StoryAccessRepository(prisma);
 export const storyGenreRepository = new StoryGenreRepository(prisma);
 export const genresOnStoriesRepository = new GenresOnStoriesRepository(prisma);
+export const assetRepository = new AssetRepository(prisma);
+export const assetTransactionRepository = new AssetTransactionRepository(prisma);
+export const articleRepository = new ArticleRepository(prisma);
+export const articleAccessRepository = new ArticleAccessRepository(prisma);
+export const articleTransactionRepository = new ArticleTransactionRepository(prisma);
+export const paymentRepository = new PaymentRepository(prisma);
+export const articleCommentRepository = new ArticleCommentRepository(prisma);
+export const articleLikeRepository = new ArticleLikeRepository(prisma);
+export const articleRatingRepository = new ArticleRatingRepository(prisma);
+export const storyRatingRepository = new StoryRatingRepository(prisma);
+export const tagRepository = new TagRepository(prisma);
+export const tagsOnArticleRepository = new TagsOnArticleRepository(prisma);
+export const chapterRepository = new ChapterRepository(prisma);
+

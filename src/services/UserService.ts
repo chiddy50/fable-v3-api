@@ -86,6 +86,40 @@ export class UserService implements IUserService {
       }
   }
 
+  public getUser = async (
+    req: Request,
+    res: Response
+  ): Promise<void> => {
+    try {
+
+      const { id: userId } = req.params;
+
+      const user = await this.userRepo.get({ 
+        where: {
+          id: userId
+        },
+        include: {
+          _count: {
+            select: {
+              articles: true,
+              stories: true
+            }
+          },
+          socialMedia: true
+ 
+        }
+      });
+
+      res.status(200).json({ 
+        user, 
+        error: false, 
+        message: "success" 
+      });
+    } catch (error) {
+      this.errorService.handleErrorResponse(error)(res);                        
+    }
+  }
+
   public getUserData = async (
     req: Request,
     res: Response
@@ -101,6 +135,7 @@ export class UserService implements IUserService {
             }
           },
           transactions: true,
+          socialMedia: true
         }
       });
 
@@ -122,7 +157,10 @@ export class UserService implements IUserService {
       const user: IJwtPayload = req.user as IJwtPayload; 
       const id = user?.id;
 
-      const reader = await this.userRepo.get({ where: { id } }) as User | null;
+      const reader = await this.userRepo.get({ 
+        where: { id }, 
+        include: { socialMedia: true } 
+      }) as User | null;
       if (!reader) throw new Error("Unidentified User");
 
       res.status(200).json({ 
