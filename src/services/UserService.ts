@@ -156,15 +156,18 @@ export class UserService implements IUserService {
     try {
       const user: IJwtPayload = req.user as IJwtPayload; 
       const id = user?.id;
+      console.log({user});
 
       const reader = await this.userRepo.get({ 
         where: { id }, 
         include: { socialMedia: true } 
       }) as User | null;
+      console.log({reader});
       if (!reader) throw new Error("Unidentified User");
 
       res.status(200).json({ 
         user: reader, 
+        reader: user, 
         error: false, 
         message: "success" 
       });
