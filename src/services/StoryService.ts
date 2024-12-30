@@ -61,6 +61,10 @@ export class StoryService implements IStoryService {
                 select: {
                     id: true,
                     userId: true,
+                    price: true,
+                    isFree: true,
+                    totalRatings: true,
+                    averageRating: true,
                     projectTitle: true,
                     projectDescription: true,
                     introductionImage: true,
@@ -954,10 +958,16 @@ export class StoryService implements IStoryService {
         
             if (!story) throw new Error("Story not found");
 
+            const paidStoryTransaction = await this.transactionRepo.count({
+                storyId: id,
+                type: "read-story",
+                status: "completed"                
+            })
+
             // const response = this.getStoryResponse(story);
             // console.log(response);            
         
-            res.status(200).json({ story, error: false, message: "success" });
+            res.status(200).json({ story, paidStoryTransaction, error: false, message: "success" });
         } catch (error) {
           this.errorService.handleErrorResponse(error)(res);
         }
