@@ -1,5 +1,5 @@
 # Use the official Node.js image as base
-FROM node:18.18.0
+FROM node:18
 
 RUN npm install -g prisma
 
@@ -16,10 +16,11 @@ RUN npm install
 COPY . .
 
 RUN npm run build
-RUN prisma generate
 
+
+RUN chmod +x docker/entrypoint.sh
 # Expose the port that your app runs on
-EXPOSE 3001
+EXPOSE 3300
 
 # Command to run your application
-CMD ["npm", "start"]
+CMD ["bash", "docker/entrypoint.sh"]
