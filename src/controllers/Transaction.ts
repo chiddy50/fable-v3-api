@@ -13,7 +13,7 @@ TransactionController.post(
 TransactionController.get(
     "/user", 
     middlewareServiceFactory.verifyToken,
-    transactionServiceFactory.getTransactions
+    transactionServiceFactory.getUserTransactions
 );
 
 

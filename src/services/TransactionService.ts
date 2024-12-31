@@ -287,7 +287,7 @@ export class TransactionService implements ITransactionService {
         }
     }
 
-    public getTransactions = async (
+    public getUserTransactions = async (
         req: CustomRequest,
         res: Response
     ): Promise<void> => {
