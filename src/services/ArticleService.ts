@@ -209,7 +209,7 @@ export class ArticleService implements IArticleService {
         res: Response
     ): Promise<void> => {        
         try {
-            const { page = 1, limit, tag } = req.query;
+            const { page = 1, limit, tag, rating } = req.query;
             
             // const tagId: number | undefined = tag ? parseInt(tag as string, 10) : undefined;
             const tagId: string | undefined = tag ? tag as string : undefined;
@@ -226,6 +226,13 @@ export class ArticleService implements IArticleService {
                         tagId: tagId 
                     }
                 };
+            }
+
+            if (rating) {
+                const numRating = parseFloat(rating as string);
+                if (!isNaN(numRating)) {
+                    whereClause.averageRating = numRating;
+                }
             }
             
             const articles: any = await this.articleRepo.getAll({
