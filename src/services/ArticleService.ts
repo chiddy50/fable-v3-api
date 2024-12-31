@@ -100,7 +100,7 @@ export class ArticleService implements IArticleService {
                     ...(excerpt && { excerpt: excerpt }),
                     ...(coverImageId && { coverImage: coverImageId }),
                     // ...(isFree && { isFree: isFree }),
-                    isFree,
+                    ...(isFree && { isFree: isFree }),                    
                     ...(price && { price: price }),                    
                     ...(publishedAt && { publishedAt: publishedAt }),
                     // isPaid

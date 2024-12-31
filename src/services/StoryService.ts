@@ -738,13 +738,20 @@ export class StoryService implements IStoryService {
             //     // })
             // ]);
 
+            
+            await this.genresOnStoriesRepo.deleteMany({
+                where: {
+                    storyId: id, 
+                }
+            });
+
             await this.storyAccessRepo.deleteMany({
                 where: {
                     storyId: id, 
                 }
             });
  
-            const storyDeleted: any = await this.storyRepo.delete({
+            await this.storyRepo.delete({
                 where: {
                     id: id,
                     userId: user?.id
