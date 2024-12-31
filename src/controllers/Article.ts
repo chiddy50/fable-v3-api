@@ -27,6 +27,12 @@ ArticleController.get(
     articleServiceFactory.getArticle
 );
 
+ArticleController.delete(
+    "/:id", 
+    middlewareServiceFactory.verifyToken,    
+    articleServiceFactory.deleteArticle
+);
+
 ArticleController.put(
     "/:id", 
     middlewareServiceFactory.verifyToken,    
