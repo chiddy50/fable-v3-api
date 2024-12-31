@@ -19,7 +19,7 @@ export class ArticleService implements IArticleService {
         private articleRatingRepo: IBase,                
         private assetRepo: IBase,
         private assetTransactionRepo: IBase,
-        private tagRepository: IBase,        
+        private tagRepo: IBase,        
         private tagsOnArticleRepo: IBase,                
         private userRepo: IBase,
         private errorService: IErrorService,
@@ -157,7 +157,7 @@ export class ArticleService implements IArticleService {
             });        
             if (!article) throw new Error("Article not found"); 
 
-            const tags = await this.tagRepository.getAll();
+            const tags = await this.tagRepo.getAll();
 
             res.status(200).json({ 
                 article,
@@ -209,14 +209,28 @@ export class ArticleService implements IArticleService {
         res: Response
     ): Promise<void> => {        
         try {
-            const { page = 1, limit } = req.query;
+            const { page = 1, limit, tag } = req.query;
+            
+            // const tagId: number | undefined = tag ? parseInt(tag as string, 10) : undefined;
+            const tagId: string | undefined = tag ? tag as string : undefined;
+            const whereClause: any = {
+                publishedAt: {
+                    not: null
+                }
+            };
+
+            // Add tag filter if tagId is valid (not NaN)
+            if (tagId) {
+                whereClause.articleTags = {
+                    some: {
+                        tagId: tagId 
+                    }
+                };
+            }
             
             const articles: any = await this.articleRepo.getAll({
-                where: {
-                    publishedAt: {
-                        not: null
-                    }
-                },
+                where: whereClause,
+
                 include: {
                     user: true,
                     articleTags: {
@@ -236,12 +250,20 @@ export class ArticleService implements IArticleService {
                 
             });
 
+            const tags = await this.tagRepo.getAll({
+                orderBy: {
+                    title: 'asc'
+                },
+            });
+
             res.status(200).json({ 
                 articles,
+                tags,
                 error: false, 
                 message: "success" 
             });
         } catch (error) {
+            console.log(error);            
             this.errorService.handleErrorResponse(error)(res);                                    
         }
     }
@@ -516,7 +538,7 @@ export class ArticleService implements IArticleService {
 
     public getArticleTags = async (req: CustomRequest, res: Response): Promise<void> => {
         try {
-            const tags = await this.tagRepository.getAll();
+            const tags = await this.tagRepo.getAll();
             
             res.status(200).json({ 
                 tags,
