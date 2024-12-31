@@ -170,7 +170,49 @@ export class ArticleService implements IArticleService {
             this.errorService.handleErrorResponse(error)(res);                                    
         }
     }
+    
+    public deleteArticle = async (
+        req: CustomRequest,
+        res: Response
+    ): Promise<void> => {
+        const { id } = req.params;
 
+        try {
+            const user: IJwtPayload = req.user as IJwtPayload; 
+
+            const article: any = await this.articleRepo.get({
+                where: {
+                    id: id,
+                    userId: user?.id
+                }
+            });                    
+            if (!article) throw new Error("Article not found"); 
+
+            await this.tagsOnArticleRepo.deleteMany({
+                where: {
+                    articleId: id, 
+                }
+            });
+
+            await this.articleAccessRepo.deleteMany({
+                where: {
+                    articleId: id, 
+                }
+            });
+
+            await this.articleRepo.delete({
+                where: {
+                    id: id,
+                    userId: user?.id
+                }
+            }); 
+            res.status(200).json({ error: false, message: "success" });
+
+        } catch (error) {
+            console.log(error);            
+            this.errorService.handleErrorResponse(error)(res);                                                
+        }
+    }
     public getUserArticles = async (
         req: CustomRequest,
         res: Response
