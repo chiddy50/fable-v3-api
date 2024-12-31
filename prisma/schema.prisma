@@ -218,6 +218,8 @@ model Story {
   storyStructure StoryStructure?
   // image Image?
   storyAccesses StoryAccess[]
+  // storyAccesses StoryAccess[] @relation("StoryToAccess", onDelete: Cascade)
+
   storyGenres    GenresOnStories[]
   chapters    Chapter[]
   assetTransactions AssetTransaction[]
@@ -237,13 +239,14 @@ model Story {
   // Search optimization indices
   @@index([projectTitle])                     // Project search
   @@index([title])                           // Title search
+  @@index([isFree])                           // Title search
   
   // Composite indices for filtered searches
   @@index([type, status, publishedAt])       // Status-based filtering
   @@index([price, publishedAt])              // Price-based queries
 
-  // Unique constraint for business logic
-  @@unique([projectTitle, status, isFree], name: "unique_project_status")
+  // // Unique constraint for business logic
+  // @@unique([projectTitle, status, isFree], name: "unique_project_status")
 }
 
 model Chapter {

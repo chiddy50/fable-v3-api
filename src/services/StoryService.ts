@@ -20,6 +20,7 @@ export class StoryService implements IStoryService {
 
     constructor(
         private storyRepo: IBase,
+        private storyAccessRepo: IBase,
         private userRepo: IBase,
         private pageRepo: IBase,
         private imageRepo: IBase,
@@ -703,8 +704,8 @@ export class StoryService implements IStoryService {
                 }
             });
 
-            console.log({transactions: story.transactions});
             if (!story) throw new Error("Story Not Found");                  
+            if(story.status === "published") throw new Error("Story has been published");
             
             const transaction: any = await this.transactionRepo.get({
                 where: { 
@@ -715,9 +716,42 @@ export class StoryService implements IStoryService {
             });   
 
             if(transaction) throw new Error("Cannot delete a story that has been paid for");
-            if(story.status === "published") throw new Error("Story has been published");
 
-            const storyDeleted: any = await this.storyRepo.delete({
+            // await this.transaction([
+            //     // // Delete genre relations
+            //     // prisma.genresOnStories.deleteMany({
+            //     //   where: {
+            //     //     storyId: storyIdToDelete
+            //     //   }
+            //     // }),
+            //     // // Delete story accesses (from previous error)
+            //     // prisma.storyAccess.deleteMany({
+            //     //   where: {
+            //     //     storyId: storyIdToDelete
+            //     //   }
+            //     // }),
+            //     // // Finally delete the story
+            //     // prisma.story.delete({
+            //     //   where: {
+            //     //     id: storyIdToDelete
+            //     //   }
+            //     // })
+            // ]);
+
+            
+            await this.genresOnStoriesRepo.deleteMany({
+                where: {
+                    storyId: id, 
+                }
+            });
+
+            await this.storyAccessRepo.deleteMany({
+                where: {
+                    storyId: id, 
+                }
+            });
+ 
+            await this.storyRepo.delete({
                 where: {
                     id: id,
                     userId: user?.id
@@ -727,6 +761,7 @@ export class StoryService implements IStoryService {
             res.status(200).json({ error: false, message: "success" });
 
         } catch (error) {
+            console.log(error);            
             this.errorService.handleErrorResponse(error)(res);                        
         }
     }

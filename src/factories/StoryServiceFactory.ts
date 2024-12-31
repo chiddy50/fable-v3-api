@@ -23,6 +23,7 @@ import {
 
 export const storyServiceFactory = new StoryService(
   storyRepository,
+  storyAccessRepository,
   userRepository,
   pageRepository,
   imageRepository,

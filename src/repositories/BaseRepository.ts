@@ -66,4 +66,10 @@ export class Base implements IBase {
     return await this.db[this.modelName].upsert(data);
   };
 
+
+  public transaction = async (transactions: any): Promise<any> => {
+    return await this.db?.$transaction(transactions);
+  };
+
+
 }
