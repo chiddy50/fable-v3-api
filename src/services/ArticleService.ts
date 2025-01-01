@@ -86,18 +86,10 @@ export class ArticleService implements IArticleService {
             let publishDate;
             if (publishStatus === "publish") {
                 publishDate = new Date();
-                console.log({
-                    publishDate,
-                    publishStatus
-                });
             }
             
             if (publishStatus === "draft") {
                 publishDate = null;
-                console.log({
-                    publishDate,
-                    publishStatus
-                });
             }
             
             const articleUpdated = await this.articleRepo.update({
