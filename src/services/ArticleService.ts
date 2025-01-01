@@ -70,11 +70,7 @@ export class ArticleService implements IArticleService {
         try {
             const { id } = req.params;
 
-            const { title, content, excerpt, coverImageId, slug, isFree, price, tags, publishedAt, tipLink, depositAddress } = req.body;
-            console.log({
-                tipLink, 
-                depositAddress
-            });
+            const { title, content, excerpt, coverImageId, slug, isFree, price, tags, publishedAt, tipLink, depositAddress, publishStatus } = req.body;
             
             const user: IJwtPayload = req.user as IJwtPayload;                
             if (!user?.id) throw new Error("User Not Found");
@@ -87,6 +83,23 @@ export class ArticleService implements IArticleService {
             });        
             if (!article) throw new Error("Article not found");
 
+            let publishDate;
+            if (publishStatus === "publish") {
+                publishDate = new Date();
+                console.log({
+                    publishDate,
+                    publishStatus
+                });
+            }
+            
+            if (publishStatus === "draft") {
+                publishDate = null;
+                console.log({
+                    publishDate,
+                    publishStatus
+                });
+            }
+            
             const articleUpdated = await this.articleRepo.update({
                 where: {
                     id: id,
@@ -102,7 +115,7 @@ export class ArticleService implements IArticleService {
                     // ...(isFree && { isFree: isFree }),
                     ...(isFree && { isFree: isFree }),                    
                     ...(price && { price: price }),                    
-                    ...(publishedAt && { publishedAt: publishedAt }),
+                    ...(publishStatus && { publishedAt: publishDate }),
                     // isPaid
                 }
             });
@@ -206,6 +219,7 @@ export class ArticleService implements IArticleService {
                     userId: user?.id
                 }
             }); 
+
             res.status(200).json({ error: false, message: "success" });
 
         } catch (error) {
