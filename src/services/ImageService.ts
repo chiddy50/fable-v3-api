@@ -30,6 +30,7 @@ export class ImageService implements ImageServiceInterface {
 
             const newImage = await this.imageRepo.create({
                 data: {
+                    origin: "cloudinary",
                     userId: user?.id,
                     ...(ownerId && { ownerId: ownerId }),
                     ...(ownerType && { ownerType: ownerType }), // Story, Article
