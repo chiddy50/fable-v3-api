@@ -8,13 +8,15 @@ import {
   transactionRepository,
   storyAccessRepository,
   paymentRepository,
-  userRepository
+  userRepository,
+  articleTransactionRepository
 } from "./RepositoryFactory";
 
 export const transactionServiceFactory = new TransactionService(
     transactionRepository,
     storyAccessRepository,
     paymentRepository,
+    articleTransactionRepository,
     userRepository,
     storyRepository,
     characterRepository,

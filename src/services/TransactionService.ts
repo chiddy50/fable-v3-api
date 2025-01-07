@@ -23,6 +23,7 @@ export class TransactionService implements ITransactionService {
         private transactionRepo: IBase,
         private storyAccessRepo: IBase,  
         private paymentRepo: IBase,        
+        private articleTransactionRepo: IBase,        
         private userRepo: IBase,                
         private storyRepo: IBase,
         private characterRepo: IBase,
@@ -380,6 +381,113 @@ export class TransactionService implements ITransactionService {
         }
     }
 
+    
+    public getAllUserTransactions = async (
+        req: CustomRequest,
+        res: Response
+    ): Promise<void> => {
+        try {
+            const user: IJwtPayload = req.user as IJwtPayload;         
+            if (!user?.id) throw new Error("User Not Found"); 
+
+            const { page = 1, limit } = req.query;
+            const parsedPage: number = parseInt(page as string, 10); 
+            const parsedLimit: number = parseInt(limit as string, 10); 
+            let filter: object = { userId: user?.id };
+            const totalCount: number = await this.transactionRepo.count(filter); // Assuming you have a method to count total challenges
+            const offset = (parsedPage - 1) * parsedLimit;
+            
+            const transactions = await this.paymentRepo.getAll({ 
+                where: {
+                    userId: user?.id
+                },
+                orderBy: {
+                    createdAt: 'desc'
+                },
+                skip: Number(offset),
+                take: Number(limit),
+            });
+
+            // STORY AGGREGATE
+            const createdStoryCompletedTransactions = await this.getTransaction("create-story", user?.id);  
+            const readStoryCompletedTransactions = await this.getTransaction("read-story", user?.id);  
+            
+            const createdStoryCompletedTransactionsCount = await this.getTransactionCount("create-story", user?.id);  
+            const readStoryCompletedTransactionsCount = await this.getTransactionCount("read-story", user?.id); 
+
+            const createdStoryTotalAmount = this.calculateTransactionTotal(createdStoryCompletedTransactions); 
+            const readStoryTotalAmount = this.calculateTransactionTotal(readStoryCompletedTransactions); 
+            
+            // ARTICLE AGGREGATE
+            const createdArticlesCompletedTransactions = await this.getTransaction("create-article", user?.id);  
+            const readArticlesCompletedTransactions = await this.getTransaction("read-article", user?.id);
+
+            const createdArticlesCompletedTransactionsCount = await this.getTransactionCount("create-article", user?.id);  
+            const readArticlesCompletedTransactionsCount = await this.getTransactionCount("read-article", user?.id);
+              
+
+            const createdArticlesTotalAmount = this.calculateTransactionTotal(createdArticlesCompletedTransactions); 
+            const readArticlesTotalAmount = this.calculateTransactionTotal(readArticlesCompletedTransactions); 
+      
+            const creatorStoriesThatHaveBeenRead: any = await this.transactionRepo.aggregate({
+                _sum: {
+                    formatAmount: true, // Sum the 'amount' field
+                },
+                where: {
+                    type: "read-story", // Only transactions where users read your story
+                    story: {
+                        userId: user?.id, // Only consider transactions for stories that belong to you
+                    },
+                },
+            });
+            const amountEarnedFromStories = creatorStoriesThatHaveBeenRead?._sum?.formatAmount || 0;
+
+            const creatorArticlesThatHaveBeenRead: any = await this.articleTransactionRepo.aggregate({
+                _sum: {
+                    formatAmount: true, // Sum the 'amount' field
+                },
+                where: {
+                    type: "read-article", // Only transactions where users read your story
+                    article: {
+                        userId: user?.id, // Only consider transactions for stories that belong to you
+                    },
+                },
+            });
+
+            const amountEarnedFromArticles = creatorArticlesThatHaveBeenRead?._sum?.formatAmount || 0;
+
+
+            const totalPages: number = Math.ceil(totalCount / parsedLimit);
+            const hasNextPage: boolean = parsedPage < totalPages;
+            const hasPrevPage: boolean = parsedPage > 1;
+
+            res.status(200).json({ 
+                totalPages, hasNextPage, hasPrevPage, 
+
+                transactions,
+                // createdStoryCompletedTransactions,
+                // readStoryCompletedTransactions,
+                createdStoryTotalAmount,
+                readStoryTotalAmount,
+                createdStoryCompletedTransactionsCount,
+                readStoryCompletedTransactionsCount,
+                // createdArticlesCompletedTransactions,
+                // readArticlesCompletedTransactions,
+                createdArticlesTotalAmount,
+                readArticlesTotalAmount,
+                createdArticlesCompletedTransactionsCount,
+                readArticlesCompletedTransactionsCount,
+                amountEarnedFromStories,
+
+                amountEarnedFromArticles,
+                error: false, 
+                message: "success" 
+            });
+        } catch (error) {
+            this.errorService.handleErrorResponse(error)(res);             
+        }
+    }
+
     createTransaction = async(storyId: string, payload: CreateTransactionInterface) => {
         const transaction = await this.transactionRepo.create({ 
             data: {
@@ -451,6 +559,40 @@ export class TransactionService implements ITransactionService {
         });
 
         console.log({payment});        
+    }
+
+    getTransaction = async (type: string, userId: string) => {
+        const response = await this.paymentRepo.getAll({ 
+            where: {
+                userId: userId,
+                status: "completed",
+                type: type
+            },
+            select: {
+                amount: true,
+            },
+        });
+        return response;
+    }
+
+    getTransactionCount = async (type: string, userId: string) => {
+        const count = await this.paymentRepo.count({ 
+            userId: userId,
+            status: "completed",
+            type: type
+        });
+        return count;
+    }
+
+    calculateTransactionTotal = (transactions: object[]) => {
+        let data = transactions.reduce((sum, transaction: any) => {
+            const amountAsNumber = parseFloat(transaction?.amount);
+            
+            return sum + (isNaN(amountAsNumber) ? 0 : amountAsNumber);
+        }, 0);
+        console.log({data});
+
+        return data;
     }
     
 }   
