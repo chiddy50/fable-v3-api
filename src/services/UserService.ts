@@ -101,7 +101,13 @@ export class UserService implements IUserService {
         include: {
           _count: {
             select: {
-              articles: true,
+              articles: {
+                where: {
+                  publishedAt: {
+                    not: null
+                  }                
+                }
+              },
               stories: true
             }
           },

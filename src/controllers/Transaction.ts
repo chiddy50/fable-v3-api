@@ -16,6 +16,12 @@ TransactionController.get(
     transactionServiceFactory.getUserTransactions
 );
 
+TransactionController.get(
+    "/user/all", 
+    middlewareServiceFactory.verifyToken,
+    transactionServiceFactory.getAllUserTransactions
+);
+
 
 TransactionController.post(
     "/verify/:id", 
