@@ -140,6 +140,7 @@ export class UserService implements IUserService {
               // storyAccess: true
             }
           },
+          articles: true,
           transactions: true,
           socialMedia: true
         }
