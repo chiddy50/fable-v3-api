@@ -53,6 +53,11 @@ StoryController.get(
     storyServiceFactory.getStoryFromScratch
 );
 
+StoryController.get(
+    "/users/:id", 
+    storyServiceFactory.getUnauthenticatedUserStories
+);
+
 StoryController.put(
     "/publish/:id", 
     middlewareServiceFactory.verifyToken,

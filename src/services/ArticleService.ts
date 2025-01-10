@@ -252,6 +252,50 @@ export class ArticleService implements IArticleService {
         }
     }
 
+    public getUnauthenticatedUserArticles = async (
+        req: Request,
+        res: Response
+    ): Promise<void> => {        
+        try {
+            const { page = 1, limit } = req.query;
+            const { id: userId } = req.params;
+
+            const parsedPage: number = parseInt(page as string, 10); 
+            const parsedLimit: number = parseInt(limit as string, 10); 
+            let filter: object = { userId: userId };
+            const totalCount: number = await this.articleRepo.count(filter); 
+            const offset = (parsedPage - 1) * parsedLimit;
+
+            const articles: any = await this.articleRepo.getAll({
+                where: {
+                    userId
+                },
+                include: {
+                    articleTags: {
+                        select: {
+                            articleTag: true
+                        }
+                    },
+                },
+                skip: Number(offset),
+                take: Number(limit),
+            });
+
+            const totalPages: number = Math.ceil(totalCount / parsedLimit);
+            const hasNextPage: boolean = parsedPage < totalPages;
+            const hasPrevPage: boolean = parsedPage > 1;
+
+            res.status(200).json({ 
+                totalPages, hasNextPage, hasPrevPage, 
+                articles,
+                error: false, 
+                message: "success" 
+            });
+        } catch (error) {
+            this.errorService.handleErrorResponse(error)(res);                                    
+        }
+    }
+
     public getArticles = async (
         req: Request,
         res: Response

@@ -17,6 +17,11 @@ ArticleController.get(
 );
 
 ArticleController.get(
+    "/users/:id", 
+    articleServiceFactory.getUnauthenticatedUserArticles
+);
+
+ArticleController.get(
     "/", 
     articleServiceFactory.getArticles
 );
