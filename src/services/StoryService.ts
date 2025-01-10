@@ -968,6 +968,51 @@ export class StoryService implements IStoryService {
         }
     }
 
+    public getUnauthenticatedUserStories = async (req: Request, res: Response): Promise<void> => {
+        try {     
+            const { page = 1, limit, type = 'from-scratch' } = req.query;
+            const { id: userId } = req.params;
+
+            const parsedPage: number = parseInt(page as string, 10); 
+            const parsedLimit: number = parseInt(limit as string, 10); 
+            let filter: object = { userId: userId };
+            const totalCount: number = await this.storyRepo.count(filter);
+            const offset = (parsedPage - 1) * parsedLimit;
+
+            let filterOptions: object = { userId: userId, type };
+
+            const stories = await this.storyRepo.getAll({
+                where: filterOptions,
+                include: {
+                    characters: true,
+                    plotSuggestions: true
+                },
+                orderBy: { createdAt: 'desc' },
+                skip: Number(offset),
+                take: Number(limit),
+            });
+
+            const totalPages: number = Math.ceil(totalCount / parsedLimit);
+            const hasNextPage: boolean = parsedPage < totalPages;
+            const hasPrevPage: boolean = parsedPage > 1;
+
+            res.status(200).json({ 
+                stories, 
+                totalPages, 
+                hasNextPage, 
+                hasPrevPage, 
+                error: false, 
+                message: "Stories successfully retrieved" 
+            });        
+
+
+        } catch (error) {
+            this.errorService.handleErrorResponse(error)(res);                        
+        }
+    }
+
+    
+
     public getStoryFromScratch = async (req: CustomRequest, res: Response): Promise<void> => {
         try {
             const { id } = req.params;
