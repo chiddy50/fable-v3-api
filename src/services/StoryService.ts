@@ -979,7 +979,7 @@ export class StoryService implements IStoryService {
             const totalCount: number = await this.storyRepo.count(filter);
             const offset = (parsedPage - 1) * parsedLimit;
 
-            let filterOptions: object = { userId: userId, type };
+            let filterOptions: object = { userId: userId, type, status: "published" };
 
             const stories = await this.storyRepo.getAll({
                 where: filterOptions,
