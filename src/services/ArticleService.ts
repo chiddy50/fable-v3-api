@@ -268,7 +268,10 @@ export class ArticleService implements IArticleService {
 
             const articles: any = await this.articleRepo.getAll({
                 where: {
-                    userId
+                    userId,
+                    publishedAt: {
+                        not: null
+                    }
                 },
                 include: {
                     articleTags: {
