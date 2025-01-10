@@ -14,6 +14,7 @@ import ImageController from "./controllers/Image";
 import ArticleController from "./controllers/Article";
 import ArticleTransactionController from "./controllers/ArticleTransaction";
 import ArticleCommentController from "./controllers/ArticleComment";
+import TipController from "./controllers/Tip";
 
 dotenv.config();
 
@@ -31,6 +32,7 @@ app.use("/auth", AuthenticationController);
 app.use("/stories", StoryController);
 app.use("/characters", CharacterController);
 app.use("/transactions", TransactionController);
+app.use("/tips", TipController);
 app.use("/story-access", StoryAccessController);
 app.use("/images", ImageController);
 
