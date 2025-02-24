@@ -15,6 +15,7 @@ import ArticleController from "./controllers/Article";
 import ArticleTransactionController from "./controllers/ArticleTransaction";
 import ArticleCommentController from "./controllers/ArticleComment";
 import TipController from "./controllers/Tip";
+import ChapterController from "./controllers/Chapter";
 
 dotenv.config();
 
@@ -39,6 +40,9 @@ app.use("/images", ImageController);
 app.use("/articles", ArticleController);
 app.use("/article/transactions", ArticleTransactionController);
 app.use("/article/comment", ArticleCommentController);
+
+app.use("/chapters", ChapterController);
+
 
 
 app.listen(port, () => {

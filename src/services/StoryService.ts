@@ -154,6 +154,58 @@ export class StoryService implements IStoryService {
         }
     }
 
+    
+
+    public updateStoryOverview = async (
+        req: CustomRequest,
+        res: Response
+    ): Promise<void> => {
+        const { id } = req.params;
+
+        const { overview, isFree, price } = req.body;
+        console.log({ overview, isFree, price });
+        
+        try {
+            const user: IJwtPayload = req.user as IJwtPayload;    
+
+            if (!user?.id) throw new Error("User Not Found");
+            if (!id) throw new Error("Kindly provide a story ID");
+            
+            const story: any = await this.storyRepo.get({
+                where: {
+                    id: id,
+                    userId: user?.id,   
+                }
+            });
+            
+            if (!story) throw new Error("Story Not Found");
+
+            const updateStory: any = await this.storyRepo.update({
+                where: { 
+                    id: id,
+                    userId: user?.id,   
+                },
+                data: {
+                    ...(overview && { overview: overview }),
+                    ...(isFree && { isFree: isFree }),
+                    ...(price && { price: price }),
+                }
+            });
+            
+            res.status(200).json({ 
+                data: { 
+                    story: updateStory
+                }, 
+                error: false, 
+                message: "success" 
+            });
+
+        } catch (error) {
+            console.log(error);            
+            this.errorService.handleErrorResponse(error)(res);     
+        }
+
+    }
     public updateStoryFromScratch = async (
         req: CustomRequest,
         res: Response
@@ -479,6 +531,13 @@ export class StoryService implements IStoryService {
 
             if (genres) {
                 const incomingGenreIds = genres.map((genre: any) => genre.id);
+
+                // res.status(200).json({ 
+                //     genres, 
+                //     incomingGenreIds, 
+                //     error: false, 
+                //     message: "success" 
+                // });
 
                 // Step 1: Delete existing genres not in the incoming array
                 await this.genresOnStoriesRepo.deleteMany({

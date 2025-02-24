@@ -57,8 +57,8 @@ export class AuthenticationService implements IAuthenticationService {
         try {                
             const { clientSecret, id } = await code.loginIntents.create({
                 login: {
-                verifier: verifier.getPublicKey().toBase58(),
-                domain: loginDomain,
+                    verifier: verifier.getPublicKey().toBase58(),
+                    domain: loginDomain,
                 },
                 mode: "login",
                 signers: [ verifier ],

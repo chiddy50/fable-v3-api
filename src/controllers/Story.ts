@@ -34,6 +34,12 @@ StoryController.delete(
     storyServiceFactory.deleteStory
 );
 
+StoryController.put(
+    "/update-overview/:id", 
+    middlewareServiceFactory.verifyToken,
+    storyServiceFactory.updateStoryOverview
+);
+
 
 StoryController.put(
     "/build-from-scratch/:id", 
