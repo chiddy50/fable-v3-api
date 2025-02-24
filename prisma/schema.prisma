@@ -265,6 +265,8 @@ model Chapter {
   status                        String?  
   publishedAt                   DateTime?  // Indicates if the chapter is published
   releaseDate                   DateTime?  // Optional field for scheduling future releases
+  // createdBy                  String
+  // creator       User @relation(fields: [createdBy], references: [id], onDelete: Cascade)
 
   story       Story @relation(fields: [storyId], references: [id], onDelete: Cascade)
   updatedAt DateTime @updatedAt
@@ -390,8 +392,10 @@ model Image {
 model Scene {
   id            String   @id @default(cuid())
   storyId       String
+  // chapterId     String
+  // mediaUrl      String
   imageUrl      String?
-  content       String
+  content       String // description
   order         Int
   createdAt     DateTime @default(now())
 
@@ -843,14 +847,76 @@ model StoryRating {
 // }
 
 
-// model Chapter {
-//   id            Int      @id @default(autoincrement())
-//   title         String
-//   content       String
-//   storyId       Int
-//   story         Story    @relation(fields: [storyId], references: [id], onDelete: Cascade)
-//   published     Boolean  @default(false)  // Indicates if the chapter is published
-//   releaseDate   DateTime?  // Optional field for scheduling future releases
+
+
+
+
+// model StoryCollaborator {
+//   id                String   @id @default(cuid())
+//   userId        String
+//   storyId       String
+//   role          String
+//   joinedAt      DateTime
+
+
 //   createdAt     DateTime @default(now())
 //   updatedAt     DateTime @updatedAt
+
+//   // story         Story    @relation(fields: [storyId], references: [id], onDelete: Cascade)
+// }
+
+// model ChapterVersion {
+//   id                String   @id @default(cuid())
+//   // chapterId
+//   // versionNumber: Incremental version number.
+//   // content: The content of the chapter for this version.
+//   // editedBy: User who made the changes.
+//   // editedAt: Timestamp when this version was created.
+//   // changeSummary (Optional): A short description or diff of what changed.
+//   createdAt     DateTime @default(now())
+//   updatedAt     DateTime @updatedAt
+// }
+
+// model CollaborationLog {
+//   id                String   @id @default(cuid())
+//   // id: Unique identifier.
+//   // chapterId or storyId: Depending on whether changes are at the chapter or story level.
+//   // userId: User who made the change.
+//   // changeDetails: Details about the change (could be a diff or summary).
+//   // timestamp: When the change was made.
+// }
+
+// model SuperAdmin {
+//   id                String   @id @default(cuid())
+
+//   // // Basic personal details
+//   // firstName: string;
+//   // lastName: string;
+//   // email: string;
+//   // phoneNumber?: string; // Optional, if needed
+
+//   // // Security and authentication
+//   // passwordHash: string; // Hashed password
+//   // salt?: string; // Optional: salt used for hashing the password, if applicable
+//   // twoFactorEnabled: boolean;
+//   // twoFactorSecret?: string; // Optional: secret for 2FA if enabled
+
+//   // // Role and permissions
+//   // role: "superadmin"; // Static value or a field from an enum of roles
+//   // permissions?: string[]; // Optional: a list of additional permissions, if necessary
+
+//   // // Account status and metadata
+//   // isActive: boolean; // Whether the account is active or disabled
+//   // isVerified: boolean; // Whether the email/phone is verified
+//   // lastLoginAt?: Date; // Timestamp of the last login
+//   // failedLoginAttempts?: number; // Track number of failed logins
+//   // lockoutUntil?: Date; // If the account is locked due to too many failed logins
+
+//   // // Timestamps
+//   // createdAt: Date; // When the account was created
+//   // updatedAt: Date; // When the account was last updated
+
+//   // // Additional fields (if needed)
+//   // profilePictureUrl?: string; // URL to the admin's profile picture
+//   // bio?: string; // A short biography or description of the admin
 // }

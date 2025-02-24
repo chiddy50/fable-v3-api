@@ -411,12 +411,14 @@ export class TransactionService implements ITransactionService {
             // STORY AGGREGATE
             const createdStoryCompletedTransactions = await this.getTransaction("create-story", user?.id);  
             const readStoryCompletedTransactions = await this.getTransaction("read-story", user?.id);  
+            const tipsCompletedTransactions = await this.getTransaction("tip", user?.id);  
             
             const createdStoryCompletedTransactionsCount = await this.getTransactionCount("create-story", user?.id);  
             const readStoryCompletedTransactionsCount = await this.getTransactionCount("read-story", user?.id); 
 
             const createdStoryTotalAmount = this.calculateTransactionTotal(createdStoryCompletedTransactions); 
             const readStoryTotalAmount = this.calculateTransactionTotal(readStoryCompletedTransactions); 
+            const tipsTotalAmount = this.calculateTransactionTotal(tipsCompletedTransactions); 
             
             // ARTICLE AGGREGATE
             const createdArticlesCompletedTransactions = await this.getTransaction("create-article", user?.id);  
@@ -469,6 +471,7 @@ export class TransactionService implements ITransactionService {
                 // readStoryCompletedTransactions,
                 createdStoryTotalAmount,
                 readStoryTotalAmount,
+                tipsTotalAmount,
                 createdStoryCompletedTransactionsCount,
                 readStoryCompletedTransactionsCount,
                 // createdArticlesCompletedTransactions,
