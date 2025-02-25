@@ -4,6 +4,7 @@ import { IErrorService } from "../shared/ErrorService";
 import { Response, Request } from "express";
 import { Character, CustomRequest, IJwtPayload, Image, Page, Scene, Story } from "../shared/Interface";
 import { slugify } from "../shared/helpers";
+import { SceneInterface } from "../interfaces/Requests/SceneInterface";
 
 const _ = require('lodash');
 
@@ -17,6 +18,7 @@ export class ChapterService implements IChapterService {
         private chapterRepo: IBase,
         private storyRepo: IBase,
         private characterRepo: IBase,
+        private sceneRepo: IBase,
         private storyStructureRepo: IBase,        
         private authService: IAuth,
         private errorService: IErrorService
@@ -39,7 +41,10 @@ export class ChapterService implements IChapterService {
                 chapterPublishedAt,
                 chapterReleaseDate,
                 chapterIsFree,
+                scenes,
             } = req.body;
+
+            console.log({scenes});            
 
             const user: IJwtPayload = req.user as IJwtPayload;    
 
@@ -96,6 +101,13 @@ export class ChapterService implements IChapterService {
                         ...chapterData                                                           
                     },
                 });
+            }
+
+            const chapter: any = await this.getChapterByIndex(id, chapterNumber);
+
+            // SAVE SCENES
+            if (scenes) {
+                this.createScenes(scenes, id, chapter.id);
             }
 
             // Handle character creation if needed
@@ -253,8 +265,10 @@ export class ChapterService implements IChapterService {
             firstPlotPointExtraDetails,                           
         } = req.body;
 
-          // Prepare story update data
-          const storyUpdateData = {
+
+
+        // Prepare story update data
+        const storyUpdateData = {
             ...(firstPlotPointLocked && { firstPlotPointLocked }),                   
             ...(suggestedCharacters && { suggestedCharacters }),                     
             ...(firstPlotPointTone && { firstPlotPointTone }),
@@ -516,6 +530,32 @@ export class ChapterService implements IChapterService {
                     summary: character?.summary,    
                 }
             });
+        }
+    }
+
+    private createScenes = async (scenes: SceneInterface[], storyId: string, chapterId: string) => {
+
+        if (scenes && scenes.length > 0) {
+            // Delete existing scenes of a chapter
+            await this.sceneRepo.deleteMany({
+                where: { storyId, chapterId }
+            });
+
+            for (const scene of scenes) {
+                await this.sceneRepo.create({ 
+                    data: {
+                        storyId,
+                        chapterId,
+                        title: scene.title,
+                        content: scene.description,
+                        order: scene.order,
+                        charactersInvolved: scene.charactersInvolved,
+                        // imageUrl      String?
+                        // externalVideoUrl         String?
+                        // videoUrl         String?            
+                    }
+                });
+            }
         }
     }
 
