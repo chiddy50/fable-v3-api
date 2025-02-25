@@ -5,13 +5,15 @@ import {
   storyRepository,
   characterRepository,
   storyStructureRepository,
-  chapterRepository
+  chapterRepository,
+  sceneRepository
 } from "./RepositoryFactory";
 
 export const chapterServiceFactory = new ChapterService(
   chapterRepository,
   storyRepository,
   characterRepository,
+  sceneRepository,
   storyStructureRepository,
   authService,
   errorService

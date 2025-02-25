@@ -1091,7 +1091,12 @@ export class StoryService implements IStoryService {
                     plotSuggestions: true,
                     storyStructure: true,
                     user: true,
-                    assetTransactions: true
+                    assetTransactions: true,
+                    chapters: {
+                        include: {
+                            scenes: true  // This correctly includes scenes for each chapter
+                        }
+                    }
                 }
             });
         
@@ -1108,7 +1113,8 @@ export class StoryService implements IStoryService {
         
             res.status(200).json({ story, paidStoryTransaction, error: false, message: "success" });
         } catch (error) {
-          this.errorService.handleErrorResponse(error)(res);
+            console.log(error);            
+            this.errorService.handleErrorResponse(error)(res);
         }
     };
 
