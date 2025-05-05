@@ -45,6 +45,16 @@ export class ChapterServiceV2 implements IChapterService {
             });        
             if (!story) throw new Error("Story Not Found");
     
+            // check if index exists
+            
+            const chapterIndexExists: any = await this.storyRepo.get({
+                where: {
+                    index: index,
+                    storyId: storyId,
+                }
+            });        
+            if (!chapterIndexExists) throw new Error(`Chapter ${index} number exists already`);
+
             const chapter = await this.chapterRepo.create({
                 data: { 
                     storyId,
