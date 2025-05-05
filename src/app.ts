@@ -1,3 +1,7 @@
+Object.keys(require.cache).forEach(function(key) {
+  delete require.cache[key];
+});
+
 // app.ts
 import express from "express";
 import dotenv from "dotenv";
@@ -16,6 +20,10 @@ import ArticleTransactionController from "./controllers/ArticleTransaction";
 import ArticleCommentController from "./controllers/ArticleComment";
 import TipController from "./controllers/Tip";
 import ChapterController from "./controllers/Chapter";
+import SceneController from "./controllers/Scene";
+import CreditTransactionController from "./controllers/Credit";
+import StoryControllerV2 from "./controllers/v2/Story";
+import ChapterControllerV2 from "./controllers/v2/Chapter";
 
 dotenv.config();
 
@@ -25,12 +33,14 @@ const port = process.env.APP_PORT;
 app.use(cors());
 app.use(express.json());
 
+
 app.use("/", HelperController);
 app.use("/users", UserController);
 app.use("/assets", AssetController);
 app.use("/auth", AuthenticationController);
 
 app.use("/stories", StoryController);
+
 app.use("/characters", CharacterController);
 app.use("/transactions", TransactionController);
 app.use("/tips", TipController);
@@ -42,7 +52,13 @@ app.use("/article/transactions", ArticleTransactionController);
 app.use("/article/comment", ArticleCommentController);
 
 app.use("/chapters", ChapterController);
+app.use("/scenes", SceneController);
 
+app.use("/credits", CreditTransactionController);
+
+// VERSION 2 ROUTES
+app.use("/v2/stories", StoryControllerV2);
+app.use("/v2/chapters", ChapterControllerV2);
 
 
 app.listen(port, () => {

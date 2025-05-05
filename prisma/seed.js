@@ -1,5 +1,6 @@
 const { PrismaClient } = require('@prisma/client');
 // const { storyGenres } = require('../src/shared/data');
+const { v4 } = require("uuid");
 
 const prisma = new PrismaClient();
 
@@ -121,6 +122,14 @@ const blogCategories = [
 ];
 
 
+const targetAudienceOptions = [
+  { label: "Early Readers (5-8)", value: "Early Readers (5-8)" },
+  { label: "Middle Grade (8-12)", value: "Middle Grade (8-12)" },
+  { label: "Young Adult (12-18)", value: "Young Adult (12-18)" },
+  { label: "18+", value: "18+" },
+];
+
+
 async function main() {
   
   for (const genre of storyGenres) {
@@ -139,7 +148,15 @@ async function main() {
     });
   }
 
-  console.log('Genres and categories seeded successfully');
+  for (const targetAudience of targetAudienceOptions) {
+    await prisma.targetAudience.upsert({
+      where: { name: targetAudience.value },
+      update: {},
+      create: { name: targetAudience.value, publicId: v4() },
+    });
+  }
+
+  console.log('Genres, categories & target-audiences seeded successfully');
 }
 
 main()

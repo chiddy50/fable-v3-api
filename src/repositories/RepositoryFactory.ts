@@ -24,6 +24,9 @@ import { StoryRatingRepository } from "./StoryRatingRepository";
 import { TagRepository } from "./TagRepository";
 import { TagsOnArticleRepository } from "./TagsOnArticleRepository";
 import { ChapterRepository } from "./ChapterRepository";
+import { AuthTokenRepository } from "./AuthTokenRepository";
+import { TargetAudienceRepository } from "./TargetAudienceRepository";
+import { AudienceOnStoriesRepository } from "./AudienceOnStoriesRepository";
 
 const prisma: any = new PrismaClient();
 
@@ -52,3 +55,6 @@ export const storyRatingRepository = new StoryRatingRepository(prisma);
 export const tagRepository = new TagRepository(prisma);
 export const tagsOnArticleRepository = new TagsOnArticleRepository(prisma);
 export const chapterRepository = new ChapterRepository(prisma);
+export const authTokenRepository = new AuthTokenRepository(prisma);
+export const targetAudienceRepository = new TargetAudienceRepository(prisma);
+export const audienceOnStoriesRepository = new AudienceOnStoriesRepository(prisma);

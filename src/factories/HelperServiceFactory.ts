@@ -7,7 +7,8 @@ import {
   genresOnStoriesRepository,
   storyGenreRepository,
   userRepository,
-  storyAccessRepository
+  storyAccessRepository,
+  targetAudienceRepository
 } from "./RepositoryFactory";
 
 
@@ -20,6 +21,7 @@ export const helperServiceFactory = new HelperService(
   genresOnStoriesRepository,
   storyGenreRepository,
   errorService,
+  targetAudienceRepository
 );
 
 

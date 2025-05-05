@@ -3,6 +3,7 @@ export interface SceneInterface {
     description: string,
     order: number,
     setting: string,
+    prompt: string,
     charactersInvolved: CharactersInvolved[]
 }
 

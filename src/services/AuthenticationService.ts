@@ -29,6 +29,7 @@ const verifier = Keypair.fromSecretKey(exampleGetCodePrivate)
 export class AuthenticationService implements IAuthenticationService {
     constructor(
         private userRepo: IBase,
+        private authTokenRepo: IBase,        
         private authService: IAuth,
         private errorService: IErrorService
     ) {}
@@ -85,6 +86,12 @@ export class AuthenticationService implements IAuthenticationService {
 
         if(!JWT_SECRET) throw new Error("Jwt error");
 
+        let authTokenUsed = await this.authTokenRepo.getUnique({
+            where: { token: intent },
+        });
+
+        // if(authTokenUsed) throw new Error("Login has already occured");
+
         try {
             // Get the status of the login intent
             const status = await code.getStatus({ intent });
@@ -97,13 +104,16 @@ export class AuthenticationService implements IAuthenticationService {
 
             const token = jwt.sign({ userId, intent }, JWT_SECRET, { expiresIn: '5h' });
             if (!token) throw new Error("Login error");
-            let auth_user;
+            let auth_user: any;
             auth_user = await this.userRepo.getUnique({
                 where: { publicId: userId },
                 select: {
                     id: true,
                     name: true,
-                    publicId: true,            
+                    publicId: true,    
+                    firstTimeLogin: true,
+                    userType: true,
+                    imageUrl: true
                 },
             });
 
@@ -115,15 +125,31 @@ export class AuthenticationService implements IAuthenticationService {
                             create: {
                                 x: null
                             } // This will create a social media record with all nullable fields set to null
+                        },
+                        info: {
+                            create: {
+                                favoriteGenre: null
+                            }
                         }                                     
                     },
                     select: {
                         id: true,
                         name: true,
                         publicId: true,
+                        firstTimeLogin: true,
+                        userType: true,
+                        imageUrl: true
                     },
                 });
             }
+
+            // await this.authTokenRepo.create({
+            //     data: {
+            //         userId: auth_user?.id,
+            //         token: intent,
+            //         isUsed: true
+            //     }
+            // });
 
             res.status(200).json({ 
                 token,
