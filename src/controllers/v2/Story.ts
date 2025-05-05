@@ -44,6 +44,12 @@ StoryControllerV2.get(
 );
 
 
+StoryControllerV2.get(
+    "/unauthenticated/:id", 
+    storyServiceFactoryV2.getUnauthenticatedStory
+);
+
+
 
 
 
