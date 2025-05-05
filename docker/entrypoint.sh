@@ -3,7 +3,7 @@ set -e
 
 # Run database migrations
 echo "Running db reset..."
-#npx prisma migrate reset --force --skip-seed
+npx prisma migrate reset --force --skip-seed
 echo "Db reset complete ola"
 
 echo "running prisma generate"
