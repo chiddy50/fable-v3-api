@@ -13,6 +13,25 @@ datasource db {
   url      = env("DATABASE_URL")
 }
 
+
+
+enum GenerationType {
+  IMAGE
+  VIDEO
+  MODEL
+  AUDIO
+  OTHER
+}
+
+
+enum ReactionType {
+  LIKE
+  DISLIKE
+}
+
+
+
+
 model User {
   id                   String    @id @default(cuid())
   email                String?   @unique
@@ -29,9 +48,16 @@ model User {
   tipLink              String? 
   imageUrl             String?
   backgroundImage      String?
+  dateOfBirth          String?
 
   averageRating   Float?    
   totalRatings    Int       @default(0)
+  credits              Float       @default(0.0)
+  firstTimeLogin       Boolean?    @default(true)
+  lastLogin            DateTime?
+  password             String?
+  userType             String?
+
 
   updatedAt             DateTime @updatedAt
   createdAt             DateTime  @default(now())
@@ -51,6 +77,18 @@ model User {
   articleRatings          ArticleRating[]
   storyRatings            StoryRating[]
   socialMedia             SocialMedia?   // One-to-one relation
+  info                    UserInformation?
+  commentReactions               CommentReaction[]
+  notifications  Notification[]
+  bookmarks  Bookmark[]  // Add this line
+  creditTransactions CreditTransaction[]
+  sceneAssets SceneAsset[]
+  characterAssets CharacterAsset[]
+  chapterAssets  ChapterAsset[]
+  authTokens AuthToken[]
+  subscriptions  Subscription[] @relation("UserSubscriptions")
+  subscribers    Subscription[] @relation("WriterSubscribers")
+
 
   @@index([name])
   @@index([totalRatings])
@@ -82,6 +120,28 @@ model SocialMedia {
   @@index([x])
 }
 
+model UserInformation {
+  id             String   @id @default(uuid())
+  userId         String   @unique
+  user           User     @relation(fields: [userId], references: [id], onDelete: Cascade, onUpdate: Cascade)
+  favoriteGenre  Json?
+  favoriteVibe   Json?
+  typeOfCreator  Json?
+  updatedAt DateTime @updatedAt
+  createdAt      DateTime @default(now())
+}
+
+model AuthToken {
+  id             String   @id @default(uuid())
+  userId         String   
+  user           User     @relation(fields: [userId], references: [id], onDelete: Cascade, onUpdate: Cascade)
+  token         String   @unique
+  isUsed     Boolean   @default(false) 
+
+  updatedAt DateTime @updatedAt
+  createdAt      DateTime @default(now())
+}
+
 model Story {
   id                            String   @id @default(cuid())
   userId                        String
@@ -90,17 +150,25 @@ model Story {
   title                         String?
   slug                          String? @unique
 
+  coverImageUrl                 String?
+  bannerImageUrl                 String?
+
   imageUrl                      String?
   imageStatus                   String?
   imageId                       String?
 
-  type                          String?
+  type                          String?  // ai or original
+  storyType                     String?  // novel or short-story
   overview                      String? @db.Text
-  
+  autoDetectStructure           Boolean?
+
   writingStep                   Int? @default(1)
   duration                      String?
   averageRating   Float?    
   totalRatings    Int       @default(0)
+  generalChapterFee         Decimal?  
+  applyFeeToAllChapters     Boolean? @default(false)
+
 
   currentPlotStep               Int? @default(1)
   introductionStep              Int? @default(1)
@@ -108,8 +176,13 @@ model Story {
   resolutionStep              Int? @default(0)
 
   status                        String? // published, completed or draft
+  currentChapterId              String?
   currentStep                   Int?
   currentStepUrl                String?
+  structure                     String?
+
+  targetAudience             Json?
+
   
   thematicElements              Json?
   thematicOptions               Json?
@@ -195,7 +268,6 @@ model Story {
   resolutionLocked Boolean? @default(false)
   resolutionImage String?
 
-
   paidAt                        DateTime?
   isPaid                        Boolean? @default(false)
   isFree                        Boolean   @default(false) 
@@ -221,11 +293,13 @@ model Story {
   // storyAccesses StoryAccess[] @relation("StoryToAccess", onDelete: Cascade)
 
   storyGenres    GenresOnStories[]
+  storyAudiences    AudienceOnStories[]
   chapters    Chapter[]
   assetTransactions AssetTransaction[]
   ratings     StoryRating[]
   comments        StoryComment[]
-
+  bookmarks  Bookmark[]  // Add this line
+  // characterChats    UserCharacterChat[]
 
   user User @relation(fields: [userId], references: [id], onDelete: Cascade)
 
@@ -240,6 +314,9 @@ model Story {
   @@index([projectTitle])                     // Project search
   @@index([title])                           // Title search
   @@index([isFree])                           // Title search
+
+  @@index([storyType])
+  
   
   // Composite indices for filtered searches
   @@index([type, status, publishedAt])       // Status-based filtering
@@ -261,14 +338,21 @@ model Chapter {
   isFree                        Boolean   @default(false) 
   content                       String?  
   image                         String?  
+  price                         Decimal?  
+  coverImage                    String?  
+  videoUrl                      String?
   paywall                       Boolean  @default(false)
   status                        String?  
   publishedAt                   DateTime?  // Indicates if the chapter is published
   releaseDate                   DateTime?  // Optional field for scheduling future releases
+  actPosition                   String?
+  questions                     Json?
+  summary                       String?
+
   // createdBy                  String
   // creator       User @relation(fields: [createdBy], references: [id], onDelete: Cascade)
-
   scenes                Scene[]
+  chapterAssets  ChapterAsset[]
 
   story       Story @relation(fields: [storyId], references: [id], onDelete: Cascade)
   updatedAt DateTime @updatedAt
@@ -404,91 +488,117 @@ model Scene {
   charactersInvolved Json?
   content       String // description
   order         Int
+
+  imageId            String?
+  imageStatus        String?
+  meta               Json?
+  mood               String?
+  narrative_importance String?
+  prompt             String?
+  retries            Int?
+  time_of_day        String?
+  videoId            String?
+  videoStatus        String?
+  pendingVideoUrl         String?
+
   createdAt     DateTime @default(now())
 
   // image Image?
   story Story  @relation(fields: [storyId], references: [id], onDelete: Cascade)
   chapter Chapter  @relation(fields: [chapterId], references: [id], onDelete: Cascade)
+
+  sceneAssets SceneAsset[]
 }
 
 model Character {
   id                                String   @id @default(cuid())
-  storyId                           String
-  name                              String
+  storyId                                 String
+  name                                    String
 
-  whatTheyWant                      Json?
-  whoHasIt                          Json?
-  protagonistGoalSuggestions        Json?
-
+  // Goal-related fields
+  whatTheyWant                            Json?
+  whoHasIt                                Json?
+  protagonistGoalSuggestions              Json?
   whoDoesNotHaveProtagonistGoalSuggestions Json?
-  whoDoesNotHaveProtagonistGoal             Json?
-  protagonistGoalObstacleSuggestions        Json?
-  protagonistGoalObstacle        Json?
+  whoDoesNotHaveProtagonistGoal           Json?
+  protagonistGoalObstacleSuggestions      Json?
+  protagonistGoalObstacle                 Json?
 
-  motivationSuggestions             Json?
-  isProtagonist                     Boolean? @default(true)
-  relationshipToProtagonist         String?
-  emotionTriggerEvent               Json?
-  emotionTriggerEventsSuggestions   Json?
+  // Motivation and emotions
+  motivationSuggestions                   Json?
+  isProtagonist                           Boolean? @default(true)
+  relationshipToProtagonist               String?
+  emotionTriggerEvent                     Json?
+  emotionTriggerEventsSuggestions         Json?
 
-  howCharacterOvercomeObstacleSuggestions   Json?
-  howCharacterOvercomeObstacles             Json?
+  // Character development
+  howCharacterOvercomeObstacleSuggestions Json?
+  howCharacterOvercomeObstacles           Json?
+  howCharacterGoalChangeRelationshipSuggestions Json?
+  howCharacterGoalChangeRelationship      Json?
+  howCharacterHasGrownSuggestions         Json?
+  howCharacterHasGrown                    Json?
+  howCharactersGoalsAndPrioritiesChangedSuggestions Json?
+  howCharactersGoalsAndPrioritiesChanged  Json?
+  unresolvedIssuesFromDepartureSuggestions Json?
+  unresolvedIssuesFromDeparture           Json?
 
-  howCharacterGoalChangeRelationshipSuggestions   Json?
-  howCharacterGoalChangeRelationship   Json?
+  // Suggestions
+  motivationsSuggestions                  Json?
+  personalityTraitsSuggestions            Json?
+  skillsSuggestions                       Json?
+  strengthsSuggestions                    Json?
+  weaknessesSuggestions                   Json?
+  coreValueSuggestions                    Json?
+  conflictAndAngstSuggestions             Json?
 
-  howCharacterHasGrownSuggestions       Json?
-  howCharacterHasGrown                  Json?
+  // Physical attributes
+  height                                  String?
+  weight                                  String?
+  hairTexture                             String?
+  hairLength                              String?
+  hairQuirk                               String?
+  facialHair                              String?
+  extraDescription                        String?  
+  age                                     String?
+  skinTone                                String?
+  hair                                    String?
+  facialFeatures                          String?
+  eye_color                               String?
+  gender                                  String?
+  clothing_style                          String?
 
-  howCharactersGoalsAndPrioritiesChangedSuggestions   Json?
-  howCharactersGoalsAndPrioritiesChanged    Json?
+  // Character traits
+  role                                    String?
+  personalityTraits                       Json?
+  motivations                             Json?
+  backstory                               String?
+  angst                                   String?
+  relationships                           Json?
+  relationshipsWithOtherCharacters        Json?
+  skills                                  Json?
+  weaknesses                              Json?
+  strengths                               Json?
+  coreValues                              Json?
+  speechPattern                           Json?
+  intelligence                            String?
+  evolution                               Json?
 
-  unresolvedIssuesFromDepartureSuggestions  Json?
-  unresolvedIssuesFromDeparture   Json?
-
-  // SUGGESTIONS
-  motivationsSuggestions            Json?
-  personalityTraitsSuggestions      Json?
-  skillsSuggestions                 Json?
-  strengthsSuggestions              Json?
-  weaknessesSuggestions             Json?
-  coreValueSuggestions              Json?
-  conflictAndAngstSuggestions       Json?
-
-  height                            String?
-  weight                            String?
-
-  hairTexture                      String?
-  hairLength                       String?
-  hairQuirk                        String?
-  facialHair                       String?
-  extraDescription                 String?  
-
-  age                                       String?
-  skinTone                                  String?
-  hair                                      String?
-  facialFeatures                            String?
-  gender                                    String?
-  role                                      String?
-  personalityTraits                 Json?
-  motivations                       Json?
-  backstory                         String?
-  angst                             String?
-  relationships                     Json?
-  relationshipsWithOtherCharacters  Json?
-  skills                            Json?
-  weaknesses                        Json?
-  strengths                         Json?
-  coreValues                        Json?
-  speechPattern                     Json?
-  imageUrl                          String?
-  description                       String?
-  summary                           String?
-  intelligence                      String?
+  // Media and metadata
+  imageUrl                                String?
+  public_id                               String?
+  description                             String?
+  summary                                 String?
+  metaData                                Json?
   createdAt                         DateTime @default(now())
   updatedAt DateTime @updatedAt
 
   // image Image?
+  // characterInstances     CharacterInstance[]
+  // characterChats         UserCharacterChat[]
+  // characterRelationships UserCharacterRelationship[]
+
+  assets CharacterAsset[]
 
   story Story @relation(fields: [storyId], references: [id], onDelete: Cascade)
 }
@@ -558,6 +668,31 @@ model GenresOnStories {
   createdAt DateTime @default(now())
 
   @@unique([storyId, storyGenreId]) // Ensures a story cannot have the same genre more than once
+}
+
+model TargetAudience {
+  id     String      @id @default(cuid())
+  name   String   @unique
+  description String?
+  publicId             String?
+  stories AudienceOnStories[]
+
+  updatedAt DateTime @updatedAt
+  createdAt     DateTime   @default(now())
+}
+
+model AudienceOnStories {
+  id     String      @id @default(cuid())
+  storyId   String
+  targetAudienceId   String
+  story     Story    @relation(fields: [storyId], references: [id])
+  targetAudience     TargetAudience    @relation(fields: [targetAudienceId], references: [id])
+  publicId             String?   @unique
+
+  updatedAt DateTime @updatedAt
+  createdAt     DateTime   @default(now())
+
+  @@unique([storyId, targetAudienceId]) // Ensures a story cannot have the same genre more than once
 }
 
 model Asset {
@@ -687,20 +822,6 @@ model TagsOnArticle {
 }
 
 
-// model Comment {
-//   id        String    @id @default(cuid())
-//   content   String
-//   articleId String
-//   article   Article   @relation(fields: [articleId], references: [id])
-//   userId    String
-//   user      User      @relation(fields: [userId], references: [id])
-//   createdAt DateTime  @default(now())
-//   updatedAt DateTime  @updatedAt
-
-//   @@index([articleId])
-//   @@index([userId])
-// }
-
 model ArticleComment {
   id          String    @id @default(cuid())
   content     String
@@ -738,6 +859,10 @@ model StoryComment {
   parent      StoryComment?  @relation(name: "StoryCommentReplies", fields: [parentId], references: [id], onDelete: Cascade) 
   replies     StoryComment[] @relation(name: "StoryCommentReplies") // Self-referencing relationship for replies
   
+  reactions   CommentReaction[]
+  likeCount   Int         @default(0)
+  dislikeCount Int        @default(0)
+
   // Additional fields that might be useful
   isEdited  Boolean   @default(false)
   replyCount Int      @default(0)     // Cache the number of replies
@@ -750,6 +875,19 @@ model StoryComment {
   @@index([parentId]) // Needed for efficient reply lookups
 }
 
+
+model CommentReaction {
+  id         String         @id @default(cuid())
+  userId     String
+  commentId  String
+  type       ReactionType
+  createdAt  DateTime       @default(now())
+
+  user       User           @relation(fields: [userId], references: [id])
+  comment    StoryComment   @relation(fields: [commentId], references: [id])
+
+  @@unique([userId, commentId]) // Only one reaction per user per comment
+}
 
 model ArticleTransaction {
   id                String   @id @default(cuid())
@@ -846,13 +984,172 @@ model StoryRating {
   @@index([rating]) // Useful for querying articles by rating
 }
 
-// model Subscription {
-//   id        Int       @id @default(autoincrement())
-//   userId    Int       // The reader subscribing
-//   writerId  Int       // The writer they are subscribing to (assumed writer is a user as well)
-//   expiresAt DateTime  // When the subscription expires (next monthly renewal)
-//   createdAt DateTime  @default(now())
-// }
+model CreditTransaction {
+  id          String   @id @default(uuid())
+  userId      String
+  type        String
+  amount      Decimal  
+  description String?
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime
+
+  user        User     @relation(fields: [userId], references: [id], onDelete: Cascade, onUpdate: Cascade)
+  
+  @@index([userId, type])
+}
+
+
+model Subscription {
+  id                String   @id @default(cuid())
+  userId     String   // The reader subscribing
+  writerId   String   // The writer being subscribed to
+  expiresAt  DateTime
+  createdAt  DateTime @default(now())
+
+  // Relations
+  user       User     @relation("UserSubscriptions", fields: [userId], references: [id])
+  writer     User     @relation("WriterSubscribers", fields: [writerId], references: [id])
+
+  @@unique([userId, writerId])
+}
+
+
+
+model Bookmark {
+  id        String   @id @default(uuid())
+  userId    String
+  storyId   String
+  createdAt DateTime @default(now())
+
+  user      User     @relation(fields: [userId], references: [id])
+  story     Story    @relation(fields: [storyId], references: [id])
+
+  @@unique([userId, storyId]) // Prevent duplicate bookmarks
+}
+
+
+
+model Notification {
+  id                String   @id @default(cuid())
+  userId     String   // Recipient
+  type       String   // e.g. "NEW_STORY"
+  title    String?
+  message    String
+  data       Json?    // e.g. { storyId: "abc123" }
+  read       Boolean  @default(false)
+  createdAt  DateTime @default(now())
+  updatedAt   DateTime  @updatedAt
+
+  user       User     @relation(fields: [userId], references: [id])
+}
+
+
+
+model SceneAsset {
+  id                String         @id @default(uuid())
+  userId            String
+  sceneId           String
+  type              GenerationType
+  cost              Float          @default(0)
+  url               String?
+  imageUrl          String?
+  externalImageUrl  String?
+  videoUrl          String?
+  externalVideoUrl  String?
+  videoId           String?
+  imageId           String?
+  imageStatus       String?
+  videoStatus       String?
+  videoDuration     String?
+  retries           Int?
+  meta              Json?
+  modificationOfId  String?
+  createdAt         DateTime       @default(now())
+  updatedAt   DateTime  @updatedAt
+
+  user              User           @relation(fields: [userId], references: [id], onDelete: Cascade, onUpdate: Cascade)
+  scene             Scene          @relation(fields: [sceneId], references: [id], onDelete: Cascade, onUpdate: Cascade)
+  modifiedVersion   SceneAsset?    @relation("ModifiedVersions", fields: [modificationOfId], references: [id], onDelete: SetNull, onUpdate: Cascade)
+  modifiedVersions  SceneAsset[]   @relation("ModifiedVersions")
+
+  @@index([createdAt])
+  @@index([modificationOfId])
+  @@index([sceneId])
+  @@index([type])
+  @@index([userId])
+}
+
+model CharacterAsset {
+  id                 String         @id @default(uuid())
+  userId             String
+  characterId        String
+  type               GenerationType
+  cost               Float
+  url                String?
+  imageUrl           String?
+  externalImageUrl   String?
+  videoUrl           String?
+  externalVideoUrl   String?
+  videoId            String?
+  imageId            String?
+  imageStatus        String?
+  videoStatus        String?
+  videoDuration      String?
+  retries            Int?
+  meta               Json?
+  modificationOfId   String?
+  createdAt          DateTime       @default(now())
+  updatedAt     DateTime @updatedAt
+
+  character          Character      @relation(fields: [characterId], references: [id], onDelete: Cascade, onUpdate: Cascade)
+  modificationOf     CharacterAsset? @relation("AssetModifications", fields: [modificationOfId], references: [id], onDelete: SetNull, onUpdate: Cascade)
+  modifications      CharacterAsset[] @relation("AssetModifications")
+  user               User           @relation(fields: [userId], references: [id], onDelete: Cascade, onUpdate: Cascade)
+
+  @@index([characterId])
+  @@index([createdAt])
+  @@index([modificationOfId])
+  @@index([type])
+  @@index([userId])
+}
+
+model ChapterAsset {
+  id                String         @id @default(uuid())
+  userId            String
+  chapterId         String
+  type              GenerationType
+  cost              Decimal
+
+  coverImageUrl          String?
+  externalCoverImageUrl  String?
+
+  imageUrl          String?
+  externalImageUrl  String?
+  videoUrl          String?
+  externalVideoUrl  String?
+  videoId           String?
+  imageId           String?
+  imageStatus       String?
+  videoStatus       String?
+  videoDuration     String?
+  retries           Int?
+  meta              Json?
+  modificationOfId  String?
+  createdAt         DateTime       @default(now())
+  updatedAt     DateTime @updatedAt
+  
+  user              User           @relation(fields: [userId], references: [id], onDelete: Cascade, onUpdate: Cascade)
+  chapter           Chapter        @relation(fields: [chapterId], references: [id], onDelete: Cascade, onUpdate: Cascade)
+  modifiedVersion   ChapterAsset?  @relation("AssetModifications", fields: [modificationOfId], references: [id], onDelete: SetNull, onUpdate: Cascade)
+  modifications     ChapterAsset[] @relation("AssetModifications")
+
+  @@index([chapterId])
+  @@index([createdAt])
+  @@index([modificationOfId])
+  @@index([type])
+  @@index([userId])
+}
+
 
 
 
@@ -927,4 +1224,119 @@ model StoryRating {
 //   // // Additional fields (if needed)
 //   // profilePictureUrl?: string; // URL to the admin's profile picture
 //   // bio?: string; // A short biography or description of the admin
+// }
+
+
+
+
+
+
+
+
+
+
+// model ChatMessage {
+//   id         String   @id @default(uuid())
+//   chatId     String
+//   senderType SenderType
+//   content    String   @db.Text
+//   createdAt  DateTime @default(now())
+//   embedding  Float[]  @db.Vector(1536) // Stores OpenAI embeddings
+//   chat       UserCharacterChat @relation(fields: [chatId], references: [id])
+// }
+
+
+// model CharacterMemory {
+//   id             String                  @id @default(uuid())
+//   relationshipId String
+//   memoryType     String
+//   content        String                  @db.Text
+//   importance     Int                     @default(1)
+//   createdAt      DateTime                @default(now())
+//   relatedEntities Json?
+//   isCoreMemory   Boolean                 @default(false)
+//   embedding      Float[]                  @db.Vector(1536) 
+//   relationship   UserCharacterRelationship @relation(fields: [relationshipId], references: [id])
+// }
+
+
+// model UserCharacterChat {
+//   id                String              @id @default(uuid())
+//   userId            String
+//   characterId       String
+//   storyId           String
+//   createdAt         DateTime            @default(now())
+//   updatedAt         DateTime            @updatedAt
+//   lastMessageAt     DateTime?
+//   lastMessageId     String?
+//   user              User                @relation(fields: [userId], references: [id])
+//   character         Character           @relation(fields: [characterId], references: [id])
+//   story             Story               @relation(fields: [storyId], references: [id])
+//   messages          ChatMessage[]
+//   chatStatus        ChatStatus?
+//   relationship      UserCharacterRelationship   @relation(fields: [userId, characterId], references: [userId, characterId])
+
+//   @@unique([userId, characterId])
+// }
+
+// model ChatMessage {
+//   id          String       @id @default(uuid())
+//   chatId      String
+//   senderType  SenderType
+//   content     String       @db.Text
+//   createdAt   DateTime     @default(now())
+//   read        Boolean      @default(false)
+//   metadata    Json?
+//   chat        UserCharacterChat @relation(fields: [chatId], references: [id])
+// }
+
+// model UserCharacterRelationship {
+//   id                String          @id @default(uuid())
+//   userId            String
+//   characterId       String
+//   affinityScore     Float           @default(0)
+//   relationshipStatus String?
+//   interactionCount   Int            @default(0)
+//   relationshipNotes  Json?
+//   firstInteraction   DateTime       @default(now())
+//   lastInteraction    DateTime       @default(now())
+//   user               User           @relation(fields: [userId], references: [id])
+//   character          Character      @relation(fields: [characterId], references: [id])
+//   memories           CharacterMemory[]
+//   chats              UserCharacterChat[]
+
+//   @@unique([userId, characterId])
+// }
+
+// model CharacterMemory {
+//   id             String                  @id @default(uuid())
+//   relationshipId String
+//   memoryType     String
+//   content        String                  @db.Text
+//   importance     Int                     @default(1)
+//   createdAt      DateTime                @default(now())
+//   relatedEntities Json?
+//   isCoreMemory   Boolean                 @default(false)
+//   relationship   UserCharacterRelationship @relation(fields: [relationshipId], references: [id])
+// }
+
+// model ChatStatus {
+//   id               String            @id @default(uuid())
+//   chatId           String            @unique
+//   status           ChatStatusType    @default(ACTIVE)
+//   currentContext   Json?
+//   activeTopics     Json?
+//   statusUpdatedAt  DateTime          @default(now())
+//   chat             UserCharacterChat @relation(fields: [chatId], references: [id])
+// }
+
+// enum SenderType {
+//   USER
+//   CHARACTER
+// }
+
+// enum ChatStatusType {
+//   ACTIVE
+//   PAUSED
+//   COMPLETED
 // }

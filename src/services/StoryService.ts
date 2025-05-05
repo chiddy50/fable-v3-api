@@ -59,29 +59,60 @@ export class StoryService implements IStoryService {
     
             const stories = await this.storyRepo.getAll({
                 where: whereClause,
-                select: {
-                    id: true,
-                    userId: true,
-                    price: true,
-                    isFree: true,
-                    totalRatings: true,
-                    averageRating: true,
-                    projectTitle: true,
-                    projectDescription: true,
-                    introductionImage: true,
+                // select: {
+                //     id: true,
+                //     userId: true,
+                //     price: true,
+                //     isFree: true,
+                //     totalRatings: true,
+                //     averageRating: true,
+                //     projectTitle: true,
+                //     projectDescription: true,
+                //     introductionImage: true,
+                //     coverImageUrl: true,
+                //     bannerImageUrl: true,
+                //     storyGenres: {
+                //         select: {
+                //             storyGenre: true
+                //         }
+                //     },
+                //     overview: true,
+                //     publishedAt: true,
+                //     genres: true,
+                //     user: {
+                //         select: {
+                //             id: true,
+                //             name: true,
+                //             email: true
+                //         }
+                //     }
+                // },
+                include: {
                     storyGenres: {
                         select: {
                             storyGenre: true
                         }
                     },
-                    overview: true,
-                    publishedAt: true,
-                    genres: true,
                     user: {
                         select: {
                             id: true,
                             name: true,
-                            email: true
+                            email: true,
+                            imageUrl: true
+                        }
+                    },
+                    chapters: {
+                        select: {
+                            id: true,
+                            index: true,
+                            readersHasAccess: true,
+                            isFree: true,
+                            coverImage: true,
+                            image: true,
+                            status: true,
+                            publishedAt: true,
+
+
                         }
                     }
                 }
@@ -95,8 +126,6 @@ export class StoryService implements IStoryService {
             this.errorService.handleErrorResponse(error)(res);            
         }
     }
-    
-    
 
     public create = async (
         req: CustomRequest,
@@ -153,8 +182,6 @@ export class StoryService implements IStoryService {
             this.errorService.handleErrorResponse(error)(res);
         }
     }
-
-    
 
     public updateStoryOverview = async (
         req: CustomRequest,
@@ -985,7 +1012,7 @@ export class StoryService implements IStoryService {
 
     public getStoriesFromScratch = async (req: CustomRequest, res: Response): Promise<void> => {
         try {     
-            const { page = 1, limit, type = 'from-scratch' } = req.query;
+            const { page = 1, limit, type = 'original' } = req.query;
 
             // const parsedLimit: number = parseInt(String(limit), 10);
             // const parsedPage: number = parseInt(String(page), 10);
@@ -1096,7 +1123,9 @@ export class StoryService implements IStoryService {
                         include: {
                             scenes: true  // This correctly includes scenes for each chapter
                         }
-                    }
+                    },
+                    storyAudiences: true,
+                    storyGenres: true
                 }
             });
         

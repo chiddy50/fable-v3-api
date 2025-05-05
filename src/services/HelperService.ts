@@ -18,6 +18,7 @@ export class HelperService implements IHelperService {
         private genresOnStoriesRepo: IBase,
         private storyGenreRepo: IBase,
         private errorService: IErrorService,
+        private targetAudienceRepo: IBase,        
     ) {}
 
     public getGenres = async (
@@ -36,6 +37,25 @@ export class HelperService implements IHelperService {
             this.errorService.handleErrorResponse(error)(res);                        
         }
     }
+
+    public getTargetAudiences = async (
+        req: Request,
+        res: Response
+    ): Promise<void> => {
+        try {
+            const targetAudiences = await this.targetAudienceRepo.getAll();
+
+            res.status(200).json({ 
+                targetAudiences,
+                error: false, 
+                message: "success" 
+            });
+        } catch (error) {
+            this.errorService.handleErrorResponse(error)(res);                        
+        }
+    }
+
+    
 
     public createUser = async (
         req: Request,

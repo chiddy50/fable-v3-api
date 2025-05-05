@@ -1,4 +1,5 @@
 import { ChapterService } from "../services/ChapterService";
+import { ChapterServiceV2 } from "../services/v2/ChapterService";
 import { authService } from "./AuthServiceFactory";
 import { errorService } from "./ErrorServiceFactory";
 import {
@@ -19,4 +20,12 @@ export const chapterServiceFactory = new ChapterService(
   errorService
 );
 
-
+export const chapterServiceFactoryV2 = new ChapterServiceV2(
+  chapterRepository,
+  storyRepository,
+  characterRepository,
+  sceneRepository,
+  storyStructureRepository,
+  authService,
+  errorService
+);

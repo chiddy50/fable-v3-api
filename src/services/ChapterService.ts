@@ -550,6 +550,8 @@ export class ChapterService implements IChapterService {
                         content: scene.description,
                         order: scene.order,
                         charactersInvolved: scene.charactersInvolved,
+                        setting: scene.setting,
+                        prompt: scene.prompt,
                         // imageUrl      String?
                         // externalVideoUrl         String?
                         // videoUrl         String?            
