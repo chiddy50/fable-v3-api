@@ -106,7 +106,7 @@ export class StoryServiceV2 implements IStoryService {
                     ...(projectTitle && { slug: _.kebabCase(projectTitle) }),
                     ...(type && { type: type }),
                     ...(storyType && { storyType: storyType }),
-                    content: "",
+      
                     currentStep: 2
                 }
             }) as Story;
@@ -115,7 +115,8 @@ export class StoryServiceV2 implements IStoryService {
                 data: { 
                     storyId: newStory?.id,
                     index: 1,
-                    isFree: true,                                                         
+                    isFree: true,    
+                    // content: "",                                                     
                 },
             });
 
@@ -154,6 +155,8 @@ export class StoryServiceV2 implements IStoryService {
                     // ...(type && { type: type }),
                     ...(genres && { genres: genres }),
                     ...(projectTitle && { slug: _.kebabCase(projectTitle) }),
+                    currentStep: 2
+
                 }
             }) as Story;
 
@@ -172,7 +175,7 @@ export class StoryServiceV2 implements IStoryService {
         res: Response
     ): Promise<void> => {
         const { id } = req.params;
-        const { generalChapterFee, applyFeeToAllChapters, projectTitle, projectDescription, currentChapterId, genres } = req.body;
+        const { generalChapterFee, applyFeeToAllChapters, projectTitle, projectDescription, currentChapterId, genres, currentStep } = req.body;
         
         try {
             const user: IJwtPayload = req.user as IJwtPayload;
@@ -196,11 +199,12 @@ export class StoryServiceV2 implements IStoryService {
                     ...(projectDescription && { projectDescription: projectDescription }),
                     ...(projectTitle && { slug: _.kebabCase(projectTitle) }),
                     ...(genres && { genres: genres }),
+                    ...(currentStep && { currentStep: currentStep }),                    
                 }
             }) as Story;
 
      
-            res.status(201).json({ data: { newStory, user }, error: false, message: "success" });
+            res.status(200).json({ data: { newStory, user }, error: false, message: "success" });
 
         } catch (error) {
             this.errorService.handleErrorResponse(error)(res);            
@@ -255,6 +259,55 @@ export class StoryServiceV2 implements IStoryService {
             this.errorService.handleErrorResponse(error)(res);
         }
     };
+
+    public getUnauthenticatedStory = async (req: Request, res: Response): Promise<void> => {
+        try {
+            const { id } = req.params;
+            
+            if (!id) throw new Error("Invalid id");
+
+
+            const story: any = await this.storyRepo.get({
+                where: {
+                    id: id,
+                },
+                include: {
+                    user: true,
+                    chapters: {
+                        include: {
+                            scenes: true  // This correctly includes scenes for each chapter
+                        }
+                    },
+                    // storyAudiences: true,
+                    storyAudiences: {
+                        select: {
+                            targetAudience: true
+                        }
+                    },
+                    storyGenres: true,
+                    comments: true
+                }
+            });
+        
+            if (!story) throw new Error("Story not found");
+
+            const paidStoryTransaction = await this.transactionRepo.count({
+                storyId: id,
+                type: "read-story",
+                status: "completed"                
+            })
+
+            // const response = this.getStoryResponse(story);
+            // console.log(response);            
+        
+            res.status(200).json({ story, paidStoryTransaction, error: false, message: "success" });
+        } catch (error) {
+            console.log(error);            
+            this.errorService.handleErrorResponse(error)(res);
+        }
+    }
+
+    
 
     public getStories = async (req: CustomRequest, res: Response): Promise<void> => {
         try {     
