@@ -101,12 +101,18 @@ export class ChapterServiceV2 implements IChapterService {
                 makeFree = isFree === "true" ? true : false;
             } 
             
+            let chapterContent = "";
+            if (!content || content === "" || content === null) {
+                chapterContent = ""
+            }else{
+                chapterContent = content
+            }
             const chapterUpdated = await this.chapterRepo.update({ 
                 where: { 
                     id,  
                 },
                 data: {
-                    ...(content && { content: content }),
+                    ...(chapterContent && { content: chapterContent }),
                     ...(title && { title: title }),
                     ...(description && { description: description }),
                     ...(duration && { duration: duration }),
