@@ -4,22 +4,23 @@ import { IErrorService } from "../shared/ErrorService";
 import { Response, Request } from "express";
 
 export interface IHelperService {
-  getGenres(req: Request, res: Response): Promise<void>; 
+    getGenres(req: Request, res: Response): Promise<void>;
 }
 
 
 export class HelperService implements IHelperService {
-    constructor(        
+    constructor(
         private userRepo: IBase,
         private storyRepo: IBase,
-        private storyAccessRepo: IBase,        
+        private storyAccessRepo: IBase,
         private characterRepo: IBase,
         private storyStructureRepo: IBase,
         private genresOnStoriesRepo: IBase,
         private storyGenreRepo: IBase,
         private errorService: IErrorService,
-        private targetAudienceRepo: IBase,        
-    ) {}
+        private targetAudienceRepo: IBase,
+        private chapterRepo: IBase,
+    ) { }
 
     public getGenres = async (
         req: Request,
@@ -28,13 +29,13 @@ export class HelperService implements IHelperService {
         try {
             const genres = await this.storyGenreRepo.getAll();
 
-            res.status(200).json({ 
+            res.status(200).json({
                 genres,
-                error: false, 
-                message: "success" 
+                error: false,
+                message: "success"
             });
         } catch (error) {
-            this.errorService.handleErrorResponse(error)(res);                        
+            this.errorService.handleErrorResponse(error)(res);
         }
     }
 
@@ -45,46 +46,46 @@ export class HelperService implements IHelperService {
         try {
             const targetAudiences = await this.targetAudienceRepo.getAll();
 
-            res.status(200).json({ 
+            res.status(200).json({
                 targetAudiences,
-                error: false, 
-                message: "success" 
+                error: false,
+                message: "success"
             });
         } catch (error) {
-            this.errorService.handleErrorResponse(error)(res);                        
+            this.errorService.handleErrorResponse(error)(res);
         }
     }
 
-    
+
 
     public createUser = async (
         req: Request,
         res: Response
     ): Promise<void> => {
-        const { 
+        const {
             name, publicId, depositAddress, tipLink
         } = req.body;
 
         const user_exists = await this.userRepo.getUnique({ publicId });
-        if(user_exists) throw new Error("User exists already");
-    
+        if (user_exists) throw new Error("User exists already");
+
         try {
             const user = await this.userRepo.create({
                 data: {
                     name,
-                    publicId, 
-                    depositAddress, 
-                    tipLink           
+                    publicId,
+                    depositAddress,
+                    tipLink
                 },
             });
 
-            res.status(200).json({ 
+            res.status(200).json({
                 user,
-                error: false, 
-                message: "success" 
+                error: false,
+                message: "success"
             });
         } catch (error) {
-          this.errorService.handleErrorResponse(error)(res);            
+            this.errorService.handleErrorResponse(error)(res);
         }
 
     }
@@ -94,21 +95,21 @@ export class HelperService implements IHelperService {
         res: Response
     ): Promise<void> => {
         try {
-            const { 
-                userId, 
+            const {
+                userId,
             } = req.body;
             const user = await this.userRepo.delete({
                 where: { id: userId }
             });
 
-            res.status(200).json({ 
+            res.status(200).json({
                 user,
-                error: false, 
-                message: "success" 
+                error: false,
+                message: "success"
             });
 
         } catch (error) {
-            this.errorService.handleErrorResponse(error)(res);                                    
+            this.errorService.handleErrorResponse(error)(res);
         }
     }
 
@@ -119,14 +120,14 @@ export class HelperService implements IHelperService {
         try {
             const users = await this.userRepo.getAll();
 
-            res.status(200).json({ 
+            res.status(200).json({
                 users,
-                error: false, 
-                message: "success" 
+                error: false,
+                message: "success"
             });
 
         } catch (error) {
-            this.errorService.handleErrorResponse(error)(res);                                    
+            this.errorService.handleErrorResponse(error)(res);
         }
     }
 
@@ -134,8 +135,8 @@ export class HelperService implements IHelperService {
         req: Request,
         res: Response
     ): Promise<void> => {
-        const { 
-            name, publicId, depositAddress, storyId, userId, imageUrl, 
+        const {
+            name, publicId, depositAddress, storyId, userId, imageUrl,
             introduceProtagonistAndOrdinaryWorld,
             incitingIncident,
             risingActionAndMidpoint,
@@ -144,16 +145,16 @@ export class HelperService implements IHelperService {
             climaxAndFallingAction,
             resolution,
         } = req.body;
-    
+
         try {
             const story = await this.storyRepo.update({
                 where: {
                     id: storyId,
                 },
                 data: {
-                    ...(userId && { userId: userId } ),
-                    ...(imageUrl && { imageUrl: imageUrl } ),
-                    ...(imageUrl && { introductionImage: imageUrl } ),                        
+                    ...(userId && { userId: userId }),
+                    ...(imageUrl && { imageUrl: imageUrl }),
+                    ...(imageUrl && { introductionImage: imageUrl }),
                 },
             });
 
@@ -162,11 +163,11 @@ export class HelperService implements IHelperService {
                 data: {
                     ...(introduceProtagonistAndOrdinaryWorld && { introduceProtagonistAndOrdinaryWorld: introduceProtagonistAndOrdinaryWorld }),
                     ...(incitingIncident && { incitingIncident: incitingIncident }),
-                    ...(firstPlotPoint && { firstPlotPoint: firstPlotPoint } ),
-                    ...(risingActionAndMidpoint && { risingActionAndMidpoint: risingActionAndMidpoint } ),
-                    ...(pinchPointsAndSecondPlotPoint && { pinchPointsAndSecondPlotPoint: pinchPointsAndSecondPlotPoint } ),
-                    ...(climaxAndFallingAction && { climaxAndFallingAction: climaxAndFallingAction } ),
-                    ...(resolution && { resolution: resolution } ),                       
+                    ...(firstPlotPoint && { firstPlotPoint: firstPlotPoint }),
+                    ...(risingActionAndMidpoint && { risingActionAndMidpoint: risingActionAndMidpoint }),
+                    ...(pinchPointsAndSecondPlotPoint && { pinchPointsAndSecondPlotPoint: pinchPointsAndSecondPlotPoint }),
+                    ...(climaxAndFallingAction && { climaxAndFallingAction: climaxAndFallingAction }),
+                    ...(resolution && { resolution: resolution }),
                 },
             });
 
@@ -179,17 +180,70 @@ export class HelperService implements IHelperService {
             //     },
             // });
 
-            
 
-            res.status(200).json({ 
+
+            res.status(200).json({
                 story,
                 storyStructure,
-                error: false, 
-                message: "success" 
+                error: false,
+                message: "success"
             });
-          
+
         } catch (error) {
-          this.errorService.handleErrorResponse(error)(res);            
+            this.errorService.handleErrorResponse(error)(res);
+        }
+    }
+
+    public updateChapter = async (
+        req: Request,
+        res: Response
+    ): Promise<void> => {
+        const { id } = req.params;
+
+        const {
+            content, readersHasAccess,
+            title, description, duration,
+            isFree, price, image, releaseDate,
+            actPosition, summary, banner, coverImage, videoUrl,
+            publishedAt, index
+        } = req.body;
+
+        try {
+            const chapterExists: any = await this.chapterRepo.get({
+                where: { id }
+            });
+            if (!chapterExists) throw new Error("Chapter Not Found");
+
+            let makeFree;
+            if (isFree) makeFree = isFree === "true" ? true : false;
+            
+            const chapterUpdated = await this.chapterRepo.update({
+                where: {
+                    id,
+                },
+                data: {
+                    ...(content && { content: content }),
+                    ...(index && { index: parseInt(index) }),
+                    ...(title && { title: title }),
+                    ...(description && { description: description }),
+                    ...(duration && { duration: duration }),
+                    ...(price && { price: price }),
+                    ...(banner && { image: banner }),
+                    ...(coverImage && { coverImage: coverImage }),
+                    ...(videoUrl && { videoUrl: videoUrl }),
+                    ...(releaseDate && { releaseDate: releaseDate }),
+                    ...(actPosition && { actPosition: actPosition }),
+                    ...(isFree && { isFree: makeFree }),
+                    // ...(isFree && { readersHasAccess: makeFree }),                    
+                    ...(summary && { summary: summary }),
+                }
+            })
+
+            res.status(200).json({ chapter: chapterUpdated, error: false, message: "success" });
+
+        } catch (error) {
+            console.error(error);
+            this.errorService.handleErrorResponse(error)(res);
         }
     }
 
