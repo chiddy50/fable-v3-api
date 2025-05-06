@@ -101,20 +101,13 @@ export class ChapterServiceV2 implements IChapterService {
                 makeFree = isFree === "true" ? true : false;
             } 
             
-            // let chapterContent = "";
-            // if (!content || content === "" || content === null) {
-            //     chapterContent = ""
-            // }else{
-            //     chapterContent = content
-            // }
-            let chapterContent = content || "";
             const chapterUpdated = await this.chapterRepo.update({ 
                 where: { 
                     id,  
                 },
                 data: {
-                    ...(chapterContent && { content: chapterContent }),
-                    // ...(chapterContent && { content: chapterContent }),
+                    // ...(content && { content: content }),
+                    content: content ?? "",
                     ...(title && { title: title }),
                     ...(description && { description: description }),
                     ...(duration && { duration: duration }),
@@ -128,7 +121,7 @@ export class ChapterServiceV2 implements IChapterService {
                     // ...(isFree && { readersHasAccess: makeFree }),                    
                     ...(summary && { summary: summary }),
                 }
-            })
+            });
 
             res.status(200).json({ chapter: chapterUpdated, error: false, message: "success" });
 

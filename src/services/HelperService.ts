@@ -222,7 +222,8 @@ export class HelperService implements IHelperService {
                     id,
                 },
                 data: {
-                    ...(content && { content: content }),
+                    // ...(content && { content: content }),
+                    content: content ?? "",
                     ...(index && { index: parseInt(index) }),
                     ...(title && { title: title }),
                     ...(description && { description: description }),
