@@ -112,6 +112,7 @@ export class StoryServiceV2 implements IStoryService {
                     ...(projectTitle && { slug: slug }),
                     ...(type && { type: type }),
                     ...(storyType && { storyType: storyType }),
+                    status: "draft",
       
                     currentStep: 2
                 }
