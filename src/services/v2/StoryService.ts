@@ -97,13 +97,19 @@ export class StoryServiceV2 implements IStoryService {
         try {
             const user: IJwtPayload = req.user as IJwtPayload;
 
+            let slug;
+            if (projectTitle) {
+                slug = await this.generateSlug(_.kebabCase(projectTitle));
+            }
+            console.log({slug});
+
             const newStory = await this.storyRepo.create({ 
                 data: {
                     userId: user?.id,    
                     ...(projectTitle && { projectTitle: projectTitle }),
                     ...(projectDescription && { projectDescription: projectDescription }),
                     ...(genres && { genres: genres }),
-                    ...(projectTitle && { slug: _.kebabCase(projectTitle) }),
+                    ...(projectTitle && { slug: slug }),
                     ...(type && { type: type }),
                     ...(storyType && { storyType: storyType }),
       
@@ -116,7 +122,7 @@ export class StoryServiceV2 implements IStoryService {
                     storyId: newStory?.id,
                     index: 1,
                     isFree: true,    
-                    // content: "",                                                     
+                    content: "",                                                     
                 },
             });
 
@@ -127,7 +133,18 @@ export class StoryServiceV2 implements IStoryService {
                 await this.addSelectedTargetAudience(selectedTargetAudience, newStory.id)
             }
 
-            res.status(201).json({ data: { newStory, user }, error: false, message: "success" });
+            const story: any = await this.storyRepo.get({
+                where: {
+                    id: newStory.id,
+                },
+                include: {
+                    chapters: true,
+                    storyAudiences: true,
+                    storyGenres: true
+                }
+            });
+
+            res.status(201).json({ story, user, error: false, message: "success" });
 
         } catch (error) {
             this.errorService.handleErrorResponse(error)(res);            
@@ -144,6 +161,12 @@ export class StoryServiceV2 implements IStoryService {
         try {
             const user: IJwtPayload = req.user as IJwtPayload;
 
+
+            let slug;
+            if (projectTitle) {
+                slug = await this.generateSlug(_.kebabCase(projectTitle));
+            }
+
             const newStory = await this.storyRepo.update({ 
                 where: { 
                     id: id,
@@ -152,6 +175,7 @@ export class StoryServiceV2 implements IStoryService {
                 data: {
                     ...(projectTitle && { projectTitle: projectTitle }),
                     ...(projectDescription && { projectDescription: projectDescription }),
+                    ...(projectDescription && { slug: slug }),
                     // ...(type && { type: type }),
                     ...(genres && { genres: genres }),
                     ...(projectTitle && { slug: _.kebabCase(projectTitle) }),
@@ -162,8 +186,10 @@ export class StoryServiceV2 implements IStoryService {
 
             if(selectedGenres) await this.addSelectedGenres(selectedGenres, newStory.id);
             if(selectedTargetAudience) await this.addSelectedTargetAudience(selectedTargetAudience, newStory.id);
+
             
-            res.status(201).json({ data: { newStory, user }, error: false, message: "success" });
+
+            res.status(201).json({ newStory, user, error: false, message: "success" });
 
         } catch (error) {
             this.errorService.handleErrorResponse(error)(res);            
@@ -325,7 +351,8 @@ export class StoryServiceV2 implements IStoryService {
             };
             
             if (status && status === "draft") {
-                filterOptions = { ...filterOptions, status: "draft" }
+                // filterOptions = { ...filterOptions, status: "draft" }
+                filterOptions = { ...filterOptions, publishedAt: null }
             }
             if (status && status === "original") {
                 filterOptions = { ...filterOptions, type: "original"  }
