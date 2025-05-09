@@ -301,6 +301,9 @@ export class StoryServiceV2 implements IStoryService {
                 include: {
                     user: true,
                     chapters: {
+                        where: {
+                            readersHasAccess: true
+                        },
                         include: {
                             scenes: true  // This correctly includes scenes for each chapter
                         }
