@@ -1080,6 +1080,8 @@ export class StoryService implements IStoryService {
                             readersHasAccess: true
                         },
                     },
+                    user: true,
+
                 },
                 orderBy: { createdAt: 'desc' },
                 skip: Number(offset),
