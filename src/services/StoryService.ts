@@ -1059,7 +1059,7 @@ export class StoryService implements IStoryService {
 
     public getUnauthenticatedUserStories = async (req: Request, res: Response): Promise<void> => {
         try {     
-            const { page = 1, limit, type = 'from-scratch' } = req.query;
+            const { page = 1, limit, } = req.query;
             const { id: userId } = req.params;
 
             const parsedPage: number = parseInt(page as string, 10); 
@@ -1068,13 +1068,18 @@ export class StoryService implements IStoryService {
             const totalCount: number = await this.storyRepo.count(filter);
             const offset = (parsedPage - 1) * parsedLimit;
 
-            let filterOptions: object = { userId: userId, type, status: "published" };
+            let filterOptions: object = { userId: userId, status: "published" };
 
             const stories = await this.storyRepo.getAll({
                 where: filterOptions,
                 include: {
                     characters: true,
-                    plotSuggestions: true
+                    plotSuggestions: true,
+                    chapters: {
+                        where: {
+                            readersHasAccess: true
+                        },
+                    },
                 },
                 orderBy: { createdAt: 'desc' },
                 skip: Number(offset),
