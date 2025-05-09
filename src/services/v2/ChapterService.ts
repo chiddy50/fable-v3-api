@@ -184,6 +184,66 @@ export class ChapterServiceV2 implements IChapterService {
         }
     }
 
+
+    public publishAllChapters = async (
+        req: CustomRequest,
+        res: Response
+    ): Promise<void> => {
+        const { id } = req.params;
+
+        const { publishedAt } = req.body
+
+        try {
+            const user: IJwtPayload = req.user as IJwtPayload;    
+            
+            const story: any = await this.storyRepo.get({
+                where: {
+                    id: id,
+                    userId: user?.id
+                },
+                include: {
+                    chapters: true
+                }
+            });
+
+            if(!story) throw new Error("Story not found")
+
+            if (story.publishedAt === null) {                
+                await this.storyRepo.update({ 
+                    where: { 
+                        id: id,
+                        userId: user?.id
+                    },
+                    data: {
+                        status: "published",
+                        publishedAt,
+                    }
+                });
+            }
+
+            story?.chapters.forEach(async (chapter: any) => {
+
+                if (chapter.publishedAt === null) {                    
+                    await this.chapterRepo.update({ 
+                        where: { 
+                            id: chapter.id,
+                            storyId: id, 
+                        },
+                        data: {
+                            publishedAt,
+                            readersHasAccess: true
+                        }
+                    });
+                }
+            });
+
+            res.status(200).json({ story, error: false, message: "success" });
+
+        } catch (error) {
+            console.error(error);       
+            this.errorService.handleErrorResponse(error)(res);   
+        }
+    }
     
 
     public updateManyChapters = async (

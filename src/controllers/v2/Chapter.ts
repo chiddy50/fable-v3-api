@@ -23,6 +23,14 @@ ChapterControllerV2.put(
 );
 
 ChapterControllerV2.put(
+    "/publish-all/:id", 
+    middlewareServiceFactory.verifyToken,
+    chapterServiceFactoryV2.publishAllChapters
+);
+
+
+
+ChapterControllerV2.put(
     "/update-many/:id", 
     middlewareServiceFactory.verifyToken,
     chapterServiceFactoryV2.updateManyChapters
