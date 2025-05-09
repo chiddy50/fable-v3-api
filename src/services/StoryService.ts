@@ -102,6 +102,9 @@ export class StoryService implements IStoryService {
                         }
                     },
                     chapters: {
+                        where: {
+                            readersHasAccess: true
+                        },
                         select: {
                             id: true,
                             index: true,
