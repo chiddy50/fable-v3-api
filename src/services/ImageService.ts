@@ -46,7 +46,7 @@ export class ImageService implements ImageServiceInterface {
                     ...(imageStatus && { imageStatus: imageStatus }),
                     ...(publicId && { publicId: publicId }),
                     ...(signature && { signature: signature }),
-                    ...(description && { description: description }), // cover-image
+                    ...(description && { description: description }), // cover-image, profile-image, banner-image
                     ...(metaData && { meta: metaData }),
                     ...(source && { source: source }), // generated or uploaded
                 }
@@ -66,7 +66,7 @@ export class ImageService implements ImageServiceInterface {
             }
             
             if (ownerType === "User") {
-                await this.saveUserImage(user, imageUrl);
+                await this.saveUserImage(user, description, imageUrl);
             }
 
             res.status(201).json({ 
@@ -79,13 +79,18 @@ export class ImageService implements ImageServiceInterface {
         }
     }
 
-    public saveUserImage = async (user: IJwtPayload, imageUrl: string) => {
+    public saveUserImage = async (user: IJwtPayload, description: string, imageUrl: string) => {
+        const profileImage = description === 'profile-image' ? imageUrl : null;
+        const banner = description === 'banner-image' ? imageUrl : null;
+
         return await this.userRepo.update({
             where: {
                 id: user?.id  
             },
             data: {
-                imageUrl
+                imageUrl,
+                ...(profileImage && { imageUrl: profileImage  }),
+                ...(banner && { backgroundImage: banner }),
             }
         });
         
