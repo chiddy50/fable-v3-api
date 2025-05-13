@@ -1,5 +1,6 @@
 import { UserService } from "../services/UserService";
 import { AuthenticationService } from "../services/AuthenticationService";
+import { AuthenticationService as AuthenticationServiceV2  } from "../services/v2/AuthenticationService";
 
 import { authService } from "./AuthServiceFactory";
 import { errorService } from "./ErrorServiceFactory";
@@ -42,6 +43,13 @@ export const userServiceFactory = new UserService(
 );
 
 export const authenticationServiceFactory = new AuthenticationService(
+  userRepository,
+  authTokenRepository,
+  authService,
+  errorService
+);
+
+export const authenticationServiceFactoryV2 = new AuthenticationServiceV2(
   userRepository,
   authTokenRepository,
   authService,
