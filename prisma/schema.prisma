@@ -168,6 +168,7 @@ model Story {
   totalRatings    Int       @default(0)
   generalChapterFee         Decimal?  
   applyFeeToAllChapters     Boolean? @default(false)
+  narrativeType                 String?
 
 
   currentPlotStep               Int? @default(1)

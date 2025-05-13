@@ -24,6 +24,7 @@ import SceneController from "./controllers/Scene";
 import CreditTransactionController from "./controllers/Credit";
 import StoryControllerV2 from "./controllers/v2/Story";
 import ChapterControllerV2 from "./controllers/v2/Chapter";
+import AuthenticationControllerV2 from "./controllers/v2/Authentication";
 
 dotenv.config();
 
@@ -57,6 +58,7 @@ app.use("/scenes", SceneController);
 app.use("/credits", CreditTransactionController);
 
 // VERSION 2 ROUTES
+app.use("/v2/auth", AuthenticationControllerV2);
 app.use("/v2/stories", StoryControllerV2);
 app.use("/v2/chapters", ChapterControllerV2);
 
