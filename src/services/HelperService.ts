@@ -90,6 +90,34 @@ export class HelperService implements IHelperService {
 
     }
 
+    public updateUser = async (
+        req: Request,
+        res: Response
+    ): Promise<void> => {
+        const {
+            userId, name, imageUrl 
+        } = req.body;
+
+        try {
+            const user = await this.userRepo.update({
+                where: { id: userId },
+                data: {
+                    name,
+                    ...(imageUrl && { imageUrl: imageUrl }),
+                },
+            });
+
+            res.status(200).json({
+                user,
+                error: false,
+                message: "success"
+            });
+        } catch (error) {
+            this.errorService.handleErrorResponse(error)(res);
+        }
+
+    }
+
     public deleteUser = async (
         req: Request,
         res: Response
@@ -153,23 +181,23 @@ export class HelperService implements IHelperService {
                 },
                 data: {
                     ...(userId && { userId: userId }),
-                    ...(imageUrl && { imageUrl: imageUrl }),
-                    ...(imageUrl && { introductionImage: imageUrl }),
+                    // ...(imageUrl && { imageUrl: imageUrl }),
+                    // ...(imageUrl && { introductionImage: imageUrl }),
                 },
             });
 
-            const storyStructure = await this.storyStructureRepo.update({
-                where: { storyId: storyId },
-                data: {
-                    ...(introduceProtagonistAndOrdinaryWorld && { introduceProtagonistAndOrdinaryWorld: introduceProtagonistAndOrdinaryWorld }),
-                    ...(incitingIncident && { incitingIncident: incitingIncident }),
-                    ...(firstPlotPoint && { firstPlotPoint: firstPlotPoint }),
-                    ...(risingActionAndMidpoint && { risingActionAndMidpoint: risingActionAndMidpoint }),
-                    ...(pinchPointsAndSecondPlotPoint && { pinchPointsAndSecondPlotPoint: pinchPointsAndSecondPlotPoint }),
-                    ...(climaxAndFallingAction && { climaxAndFallingAction: climaxAndFallingAction }),
-                    ...(resolution && { resolution: resolution }),
-                },
-            });
+            // const storyStructure = await this.storyStructureRepo.update({
+            //     where: { storyId: storyId },
+            //     data: {
+            //         ...(introduceProtagonistAndOrdinaryWorld && { introduceProtagonistAndOrdinaryWorld: introduceProtagonistAndOrdinaryWorld }),
+            //         ...(incitingIncident && { incitingIncident: incitingIncident }),
+            //         ...(firstPlotPoint && { firstPlotPoint: firstPlotPoint }),
+            //         ...(risingActionAndMidpoint && { risingActionAndMidpoint: risingActionAndMidpoint }),
+            //         ...(pinchPointsAndSecondPlotPoint && { pinchPointsAndSecondPlotPoint: pinchPointsAndSecondPlotPoint }),
+            //         ...(climaxAndFallingAction && { climaxAndFallingAction: climaxAndFallingAction }),
+            //         ...(resolution && { resolution: resolution }),
+            //     },
+            // });
 
             // const storyAccess = await this.storyAccessRepo.update({
             //     where: {
@@ -184,7 +212,40 @@ export class HelperService implements IHelperService {
 
             res.status(200).json({
                 story,
-                storyStructure,
+                // storyStructure,
+                error: false,
+                message: "success"
+            });
+
+        } catch (error) {
+            this.errorService.handleErrorResponse(error)(res);
+        }
+    }
+
+    public updateStoryPublishing = async (
+        req: Request,
+        res: Response
+    ): Promise<void> => {
+        const {
+            storyId,
+            publishedAt,
+            readersHasAccess,
+            status,
+        } = req.body;
+
+        try {
+            const story = await this.storyRepo.update({
+                where: {
+                    id: storyId,
+                },
+                data: {
+                    ...(publishedAt && { publishedAt: readersHasAccess === "true" ? publishedAt : null }),                
+                    ...(status && { status: status }),
+                },
+            });
+
+            res.status(200).json({
+                story,
                 error: false,
                 message: "success"
             });
