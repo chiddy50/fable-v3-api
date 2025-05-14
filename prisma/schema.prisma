@@ -184,7 +184,7 @@ model Story {
 
   targetAudience                Json?
   // narrativeTypes                Json?
-  tone                          Json?
+  // tone                          Json?
   
   thematicElements              Json?
   thematicOptions               Json?
