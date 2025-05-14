@@ -8,6 +8,7 @@ const HelperController: Router = express.Router();
 HelperController.get("/genres", helperServiceFactory.getGenres);
 HelperController.get("/target-audiences", helperServiceFactory.getTargetAudiences);
 HelperController.post("/create-user", helperServiceFactory.createUser);
+HelperController.post("/update-user", helperServiceFactory.updateUser);
 HelperController.post("/update-story-data", helperServiceFactory.updateStoryData);
 HelperController.post("/delete-user", helperServiceFactory.deleteUser);
 HelperController.get("/get-users", helperServiceFactory.getUsers);
