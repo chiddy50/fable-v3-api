@@ -153,23 +153,23 @@ export class HelperService implements IHelperService {
                 },
                 data: {
                     ...(userId && { userId: userId }),
-                    ...(imageUrl && { imageUrl: imageUrl }),
-                    ...(imageUrl && { introductionImage: imageUrl }),
+                    // ...(imageUrl && { imageUrl: imageUrl }),
+                    // ...(imageUrl && { introductionImage: imageUrl }),
                 },
             });
 
-            const storyStructure = await this.storyStructureRepo.update({
-                where: { storyId: storyId },
-                data: {
-                    ...(introduceProtagonistAndOrdinaryWorld && { introduceProtagonistAndOrdinaryWorld: introduceProtagonistAndOrdinaryWorld }),
-                    ...(incitingIncident && { incitingIncident: incitingIncident }),
-                    ...(firstPlotPoint && { firstPlotPoint: firstPlotPoint }),
-                    ...(risingActionAndMidpoint && { risingActionAndMidpoint: risingActionAndMidpoint }),
-                    ...(pinchPointsAndSecondPlotPoint && { pinchPointsAndSecondPlotPoint: pinchPointsAndSecondPlotPoint }),
-                    ...(climaxAndFallingAction && { climaxAndFallingAction: climaxAndFallingAction }),
-                    ...(resolution && { resolution: resolution }),
-                },
-            });
+            // const storyStructure = await this.storyStructureRepo.update({
+            //     where: { storyId: storyId },
+            //     data: {
+            //         ...(introduceProtagonistAndOrdinaryWorld && { introduceProtagonistAndOrdinaryWorld: introduceProtagonistAndOrdinaryWorld }),
+            //         ...(incitingIncident && { incitingIncident: incitingIncident }),
+            //         ...(firstPlotPoint && { firstPlotPoint: firstPlotPoint }),
+            //         ...(risingActionAndMidpoint && { risingActionAndMidpoint: risingActionAndMidpoint }),
+            //         ...(pinchPointsAndSecondPlotPoint && { pinchPointsAndSecondPlotPoint: pinchPointsAndSecondPlotPoint }),
+            //         ...(climaxAndFallingAction && { climaxAndFallingAction: climaxAndFallingAction }),
+            //         ...(resolution && { resolution: resolution }),
+            //     },
+            // });
 
             // const storyAccess = await this.storyAccessRepo.update({
             //     where: {
@@ -184,7 +184,7 @@ export class HelperService implements IHelperService {
 
             res.status(200).json({
                 story,
-                storyStructure,
+                // storyStructure,
                 error: false,
                 message: "success"
             });
