@@ -222,6 +222,39 @@ export class HelperService implements IHelperService {
         }
     }
 
+    public updateStoryPublishing = async (
+        req: Request,
+        res: Response
+    ): Promise<void> => {
+        const {
+            storyId,
+            publishedAt,
+            readersHasAccess,
+            status,
+        } = req.body;
+
+        try {
+            const story = await this.storyRepo.update({
+                where: {
+                    id: storyId,
+                },
+                data: {
+                    ...(publishedAt && { publishedAt: readersHasAccess === "true" ? publishedAt : null }),                
+                    ...(status && { status: status }),
+                },
+            });
+
+            res.status(200).json({
+                story,
+                error: false,
+                message: "success"
+            });
+
+        } catch (error) {
+            this.errorService.handleErrorResponse(error)(res);
+        }
+    }
+
     public updateChapter = async (
         req: Request,
         res: Response
