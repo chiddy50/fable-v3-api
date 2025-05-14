@@ -90,6 +90,34 @@ export class HelperService implements IHelperService {
 
     }
 
+    public updateUser = async (
+        req: Request,
+        res: Response
+    ): Promise<void> => {
+        const {
+            userId, name, imageUrl 
+        } = req.body;
+
+        try {
+            const user = await this.userRepo.update({
+                where: { id: userId },
+                data: {
+                    name,
+                    ...(imageUrl && { imageUrl: imageUrl }),
+                },
+            });
+
+            res.status(200).json({
+                user,
+                error: false,
+                message: "success"
+            });
+        } catch (error) {
+            this.errorService.handleErrorResponse(error)(res);
+        }
+
+    }
+
     public deleteUser = async (
         req: Request,
         res: Response
