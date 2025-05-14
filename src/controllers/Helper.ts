@@ -10,6 +10,7 @@ HelperController.get("/target-audiences", helperServiceFactory.getTargetAudience
 HelperController.post("/create-user", helperServiceFactory.createUser);
 HelperController.post("/update-user", helperServiceFactory.updateUser);
 HelperController.post("/update-story-data", helperServiceFactory.updateStoryData);
+HelperController.post("/update-story-publishing", helperServiceFactory.updateStoryPublishing);
 HelperController.post("/delete-user", helperServiceFactory.deleteUser);
 HelperController.get("/get-users", helperServiceFactory.getUsers);
 HelperController.put("/update-chapter/:id", helperServiceFactory.updateChapter);
