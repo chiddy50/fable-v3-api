@@ -183,7 +183,7 @@ model Story {
   structure                     String?
 
   targetAudience                Json?
-  narrativeTypes                Json?
+  // narrativeTypes                Json?
   tone                          Json?
   
   thematicElements              Json?
