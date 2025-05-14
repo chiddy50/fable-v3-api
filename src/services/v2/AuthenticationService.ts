@@ -91,8 +91,8 @@ export class AuthenticationService implements IAuthenticationService {
         if (!token || token === 'undefined' || token === undefined) throw new Error("No token found");
 
  
-        const privy_id = process.env.PRIVY_APP_ID ?? "cmalij5sn01y9le0m7quxehsa"
-        const privy_secret = process.env.PRIVY_APP_SECRET ?? "5PFhCxnrM4uEeSStXo1u27zvmkTMak63qjrNWDRN7z5pudbskuszRBJcwa9wy5gd6UyTHvkrsM4HKKkte8RvafUu"
+        const privy_id: string = process.env.PRIVY_APP_ID ?? "cmalij5sn01y9le0m7quxehsa"
+        const privy_secret: string = process.env.PRIVY_APP_SECRET ?? "5PFhCxnrM4uEeSStXo1u27zvmkTMak63qjrNWDRN7z5pudbskuszRBJcwa9wy5gd6UyTHvkrsM4HKKkte8RvafUu"
         const privy = new PrivyClient(privy_id!, privy_secret!);
 
         const verifiedUser = await privy.verifyAuthToken(token);

@@ -182,8 +182,9 @@ model Story {
   currentStepUrl                String?
   structure                     String?
 
-  targetAudience             Json?
-
+  targetAudience                Json?
+  narrativeTypes                Json?
+  tone                          Json?
   
   thematicElements              Json?
   thematicOptions               Json?
