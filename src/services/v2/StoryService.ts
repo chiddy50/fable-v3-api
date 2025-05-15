@@ -399,6 +399,20 @@ export class StoryServiceV2 implements IStoryService {
         }
     }
 
+    public getStoriesCount = async (req: Request, res: Response): Promise<void> => {
+        try {
+            const storyCount = await this.storyRepo.count({
+                status: "published"                
+            })
+            res.status(200).json({ storyCount, error: false, message: "success" });
+            
+        }catch (error) {
+            console.log(error);            
+            this.errorService.handleErrorResponse(error)(res);
+        }
+    }
+
+
 
 
     private addSelectedGenres = async (selectedGenres: number[], storyId: string) => {

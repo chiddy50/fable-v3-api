@@ -49,6 +49,13 @@ StoryControllerV2.get(
     storyServiceFactoryV2.getUnauthenticatedStory
 );
 
+StoryControllerV2.get(
+    "/count", 
+    storyServiceFactoryV2.getStoriesCount
+);
+
+
+
 
 
 
