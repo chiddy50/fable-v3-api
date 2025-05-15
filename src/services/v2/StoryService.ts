@@ -91,7 +91,7 @@ export class StoryServiceV2 implements IStoryService {
     ): Promise<void> => {
         const { 
             projectTitle, projectDescription, selectedTargetAudience, 
-            type, selectedGenres, genres, storyType, 
+            type, selectedGenres, genres, storyType, contentType
         } = req.body;
         
         try {
@@ -108,6 +108,7 @@ export class StoryServiceV2 implements IStoryService {
                     userId: user?.id,    
                     ...(projectTitle && { projectTitle: projectTitle }),
                     ...(projectDescription && { projectDescription: projectDescription }),
+                    ...(contentType && { contentType: contentType }),                    
                     ...(genres && { genres: genres }),
                     ...(projectTitle && { slug: slug }),
                     ...(type && { type: type }),
@@ -156,8 +157,8 @@ export class StoryServiceV2 implements IStoryService {
         req: CustomRequest,
         res: Response
     ): Promise<void> => {
-        const { id } = req.params;
-        const { projectTitle, projectDescription, selectedTargetAudience, type, selectedGenres, genres } = req.body;
+        const { id } = req.params                                        
+        const { projectTitle, projectDescription, selectedTargetAudience, currentStep, selectedTones, type, contentType, selectedGenres, genres } = req.body;
         
         try {
             const user: IJwtPayload = req.user as IJwtPayload;
@@ -177,11 +178,11 @@ export class StoryServiceV2 implements IStoryService {
                     ...(projectTitle && { projectTitle: projectTitle }),
                     ...(projectDescription && { projectDescription: projectDescription }),
                     ...(projectDescription && { slug: slug }),
-                    // ...(type && { type: type }),
+                    ...(selectedTones && { tone: selectedTones }),
                     ...(genres && { genres: genres }),
+                    ...(contentType && { contentType: contentType }),                    
                     ...(projectTitle && { slug: _.kebabCase(projectTitle) }),
-                    currentStep: 2
-
+                    ...(currentStep && { currentStep: currentStep }),                                        
                 }
             }) as Story;
 
@@ -292,7 +293,6 @@ export class StoryServiceV2 implements IStoryService {
             const { id } = req.params;
             
             if (!id) throw new Error("Invalid id");
-
 
             const story: any = await this.storyRepo.get({
                 where: {

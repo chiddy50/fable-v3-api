@@ -88,7 +88,7 @@ model User {
   authTokens AuthToken[]
   subscriptions  Subscription[] @relation("UserSubscriptions")
   subscribers    Subscription[] @relation("WriterSubscribers")
-
+  chapterAccesses   ChapterAccess[]
 
   @@index([name])
   @@index([totalRatings])
@@ -168,8 +168,6 @@ model Story {
   totalRatings    Int       @default(0)
   generalChapterFee         Decimal?  
   applyFeeToAllChapters     Boolean? @default(false)
-  // narrativeType                 String?
-
 
   currentPlotStep               Int? @default(1)
   introductionStep              Int? @default(1)
@@ -183,8 +181,9 @@ model Story {
   structure                     String?
 
   targetAudience                Json?
-  // narrativeTypes                Json?
-  // tone                          Json?
+  narrativeStyle                 String?
+  contentType                   String? // Fiction, Non-Fiction, Educational, Blog
+  tone                          Json?
   
   thematicElements              Json?
   thematicOptions               Json?
@@ -302,6 +301,7 @@ model Story {
   comments        StoryComment[]
   bookmarks  Bookmark[]  // Add this line
   // characterChats    UserCharacterChat[]
+  chapterAccess   ChapterAccess[]
 
   user User @relation(fields: [userId], references: [id], onDelete: Cascade)
 
@@ -355,6 +355,9 @@ model Chapter {
   // creator       User @relation(fields: [createdBy], references: [id], onDelete: Cascade)
   scenes                Scene[]
   chapterAssets  ChapterAsset[]
+  chapterAccess   ChapterAccess[]
+  transactions     Transaction[]
+  storyComment      StoryComment[]
 
   story       Story @relation(fields: [storyId], references: [id], onDelete: Cascade)
   updatedAt DateTime @updatedAt
@@ -608,6 +611,7 @@ model Character {
 model Transaction {
   id                String   @id @default(cuid())
   storyId           String
+  chapterId         String?
   userId            String
   reference         String  @unique
   key               String  @unique // intentId or clientSecret
@@ -630,6 +634,7 @@ model Transaction {
 
   // image Image?
   story Story  @relation(fields: [storyId], references: [id], onDelete: Cascade)
+  chapter Chapter?  @relation(fields: [chapterId], references: [id], onDelete: Cascade)
   user User @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   @@index([type])
@@ -653,6 +658,25 @@ model StoryAccess {
 
   @@unique([userId, storyId]) // Ensure a user can't have duplicate records for the same story
 }
+
+model ChapterAccess {
+  id        String   @id @default(cuid())
+  userId    String
+  chapterId   String
+  storyId   String
+  currentChapter  String  
+  hasAccess Boolean  @default(false)
+
+  updatedAt DateTime @updatedAt
+  createdAt DateTime @default(now())
+
+  user      User     @relation(fields: [userId], references: [id])
+  chapter     Chapter    @relation(fields: [chapterId], references: [id])
+  story     Story    @relation(fields: [storyId], references: [id])
+
+  @@unique([userId, chapterId]) // Ensure a user can't have duplicate records for the same story
+}
+
 
 model StoryGenre {
   id     Int      @id @default(autoincrement())
@@ -853,24 +877,22 @@ model StoryComment {
   id          String    @id @default(cuid())
   content     String
   storyId     String
-  story       Story   @relation(fields: [storyId], references: [id])
+  chapterId     String
   userId      String
-  user        User      @relation(fields: [userId], references: [id])
-  
-  parentId    String?   
-  parent      StoryComment?  @relation(name: "StoryCommentReplies", fields: [parentId], references: [id], onDelete: Cascade) 
-  replies     StoryComment[] @relation(name: "StoryCommentReplies") // Self-referencing relationship for replies
-  
-  reactions   CommentReaction[]
   likeCount   Int         @default(0)
+  parentId    String?   
   dislikeCount Int        @default(0)
-
-  // Additional fields that might be useful
-  isEdited  Boolean   @default(false)
-  replyCount Int      @default(0)     // Cache the number of replies
-
+  isEdited    Boolean   @default(false)
+  replyCount  Int      @default(0)     // Cache the number of replies
   createdAt   DateTime  @default(now())
   updatedAt   DateTime  @updatedAt
+  
+  user        User      @relation(fields: [userId], references: [id])
+  story       Story   @relation(fields: [storyId], references: [id])
+  chapter     Chapter   @relation(fields: [chapterId], references: [id])
+  parent      StoryComment?  @relation(name: "StoryCommentReplies", fields: [parentId], references: [id], onDelete: Cascade) 
+  replies     StoryComment[] @relation(name: "StoryCommentReplies") // Self-referencing relationship for replies  
+  reactions   CommentReaction[]
 
   @@index([storyId])
   @@index([userId])
