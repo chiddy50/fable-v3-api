@@ -63,7 +63,7 @@ export class ChapterServiceV2 implements IChapterService {
                 data: { 
                     storyId,
                     index,
-                    isFree: false,    
+                    isFree: true,    
                     content: ""                                                     
                 },
             });
