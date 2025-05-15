@@ -40,6 +40,21 @@ export class StoryService implements IStoryService {
     public getPublicStories = async (req: Request, res: Response): Promise<void> => {
         try {
             const { page = 1, limit, genre } = req.query;
+
+            // Convert page and limit to numbers with defaults
+            const pageNumber = parseInt(page as string, 10) || 1;
+            const limitNumber = parseInt(limit as string, 10) || 10;
+            
+            // Build the filter object dynamically
+            const filter: Record<string, any> = {};
+            
+
+            // Get total count of matching records
+            const totalCount = await this.storyRepo.count(filter);
+            
+            // Calculate total pages
+            const totalPages = Math.ceil(totalCount / limitNumber);
+
     
             // Safely convert genre to a number, if it exists
             const genreId: number | undefined = genre ? parseInt(genre as string, 10) : undefined;
@@ -118,12 +133,27 @@ export class StoryService implements IStoryService {
 
                         }
                     }
-                }
+                },
+                skip: (pageNumber - 1) * limitNumber,
+                take: limitNumber,
             });
     
             const genres = await this.storyGenreRepo.getAll();
     
-            res.status(200).json({ stories, genres, error: false, message: "success" });
+            res.status(200).json({ 
+                stories, 
+                genres, 
+                pagination: {
+                    currentPage: pageNumber,
+                    itemsPerPage: limitNumber,
+                    totalItems: totalCount,
+                    totalPages: totalPages,
+                    hasNextPage: pageNumber < totalPages,
+                    hasPreviousPage: pageNumber > 1
+                },
+                error: false, 
+                message: "success" 
+            });
     
         } catch (error) {
             this.errorService.handleErrorResponse(error)(res);            
