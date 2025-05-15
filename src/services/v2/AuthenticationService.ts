@@ -105,6 +105,7 @@ export class AuthenticationService implements IAuthenticationService {
                 publicId: privyId,   
                 name: name,   
                 email: email,   
+                userType: "reader",
                 socialMedia: {
                     create: {
                         x: null
