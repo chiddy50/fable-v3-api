@@ -5,6 +5,12 @@ import { middlewareServiceFactory } from "../../factories/MiddleServiceFactory";
 const StoryControllerV2: Router = express.Router();
 
 
+
+StoryControllerV2.get(
+    "/count", 
+    storyServiceFactoryV2.getStoriesCount
+);
+
 StoryControllerV2.get(
     "/", 
     middlewareServiceFactory.verifyToken,
@@ -47,11 +53,6 @@ StoryControllerV2.get(
 StoryControllerV2.get(
     "/unauthenticated/:id", 
     storyServiceFactoryV2.getUnauthenticatedStory
-);
-
-StoryControllerV2.get(
-    "/count", 
-    storyServiceFactoryV2.getStoriesCount
 );
 
 
