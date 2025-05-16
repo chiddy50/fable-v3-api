@@ -47,22 +47,16 @@ export class StoryService implements IStoryService {
             
             // Build the filter object dynamically
             const filter: Record<string, any> = {};
-            
 
-            // Get total count of matching records
-            const totalCount = await this.storyRepo.count(filter);
             
-            // Calculate total pages
-            const totalPages = Math.ceil(totalCount / limitNumber);
-
-    
             // Safely convert genre to a number, if it exists
             const genreId: number | undefined = genre ? parseInt(genre as string, 10) : undefined;
             
             const whereClause: any = {
                 status: "published",
             };
-    
+                        
+            
             // Add genre filter if genreId is valid (not NaN)
             if (genreId) {
                 whereClause.storyGenres = {
@@ -71,6 +65,12 @@ export class StoryService implements IStoryService {
                     }
                 };
             }
+
+            // Get total count of matching records
+            const totalCount = await this.storyRepo.count(whereClause);
+ 
+            // Calculate total pages
+            const totalPages = Math.ceil(totalCount / limitNumber);
     
             const stories = await this.storyRepo.getAll({
                 where: whereClause,
