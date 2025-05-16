@@ -136,7 +136,7 @@ export class StoryService implements IStoryService {
                 },
                 skip: (pageNumber - 1) * limitNumber,
                 take: limitNumber,
-                orderBy: { createdAt: 'desc' },
+                orderBy: { projectTitle: 'desc' },
             });
     
             const genres = await this.storyGenreRepo.getAll();
