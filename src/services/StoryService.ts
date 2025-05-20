@@ -10,10 +10,10 @@ import { v4 as uuidv4 } from 'uuid';
 const _ = require('lodash');
 
 export interface IStoryService {
-    create(req: Request, res: Response): Promise<void>; 
-    getStoryScene(req: Request, res: Response): Promise<void>; 
-    getStoryScenes(req: Request, res: Response): Promise<void>; 
-    getPublicStories(req: Request, res: Response): Promise<void>;     
+    create(req: Request, res: Response): Promise<void>;
+    getStoryScene(req: Request, res: Response): Promise<void>;
+    getStoryScenes(req: Request, res: Response): Promise<void>;
+    getPublicStories(req: Request, res: Response): Promise<void>;
 }
 
 export class StoryService implements IStoryService {
@@ -27,81 +27,77 @@ export class StoryService implements IStoryService {
         private characterRepo: IBase,
         private sceneRepo: IBase,
         private plotSuggestionRepo: IBase,
-        private storyStructureRepo: IBase,     
-        private transactionRepo: IBase,    
-        private genresOnStoriesRepo: IBase,             
-        private storyGenreRepo: IBase,        
-        private assetRepo: IBase,        
-        private assetTransactionRepo: IBase,        
+        private storyStructureRepo: IBase,
+        private transactionRepo: IBase,
+        private genresOnStoriesRepo: IBase,
+        private storyGenreRepo: IBase,
+        private assetRepo: IBase,
+        private assetTransactionRepo: IBase,
         private authService: IAuth,
         private errorService: IErrorService
-    ) {}
+    ) { }
 
     public getPublicStories = async (req: Request, res: Response): Promise<void> => {
         try {
-            const { page = 1, limit, genre } = req.query;
+            const { page = 1, limit, genre, genres } = req.query;
 
             // Convert page and limit to numbers with defaults
             const pageNumber = parseInt(page as string, 10) || 1;
             const limitNumber = parseInt(limit as string, 10) || 10;
-            
+
             // Build the filter object dynamically
             const filter: Record<string, any> = {};
 
-            
-            // Safely convert genre to a number, if it exists
+            // Safely convert single genre to a number, if it exists
             const genreId: number | undefined = genre ? parseInt(genre as string, 10) : undefined;
-            
+
+            // Parse genres array if it exists
+            let genreIds: number[] = [];
+            if (genres) {
+                try {
+                    // Handle JSON string format like "[1,2,3]"
+                    if (typeof genres === 'string' && genres.startsWith('[') && genres.endsWith(']')) {
+                        genreIds = JSON.parse(genres as string);
+                    }
+                    // Handle comma-separated format like "1,2,3"
+                    else if (typeof genres === 'string') {
+                        genreIds = genres.split(',').map(id => parseInt(id.trim(), 10)).filter(id => !isNaN(id));
+                    }
+                    // Handle array format (for when the middleware has parsed it)
+                    else if (Array.isArray(genres)) {
+                        genreIds = (genres as string[]).map(id => parseInt(id, 10)).filter(id => !isNaN(id));
+                    }
+                } catch (e) {
+                    console.error('Error parsing genres parameter:', e);
+                }
+            }
+
+            // Add single genre ID to the array if valid and not already included
+            if (genreId && !isNaN(genreId) && !genreIds.includes(genreId)) {
+                genreIds.push(genreId);
+            }
+
             const whereClause: any = {
                 status: "published",
             };
-                        
-            
-            // Add genre filter if genreId is valid (not NaN)
-            if (genreId) {
+
+            // Add genre filter if we have any valid genre IDs
+            if (genreIds.length > 0) {
                 whereClause.storyGenres = {
                     some: {
-                        storyGenreId: genreId 
+                        storyGenreId: { in: genreIds }
                     }
                 };
             }
 
             // Get total count of matching records
             const totalCount = await this.storyRepo.count(whereClause);
- 
+
             // Calculate total pages
             const totalPages = Math.ceil(totalCount / limitNumber);
-    
+
             const stories = await this.storyRepo.getAll({
                 where: whereClause,
-                // select: {
-                //     id: true,
-                //     userId: true,
-                //     price: true,
-                //     isFree: true,
-                //     totalRatings: true,
-                //     averageRating: true,
-                //     projectTitle: true,
-                //     projectDescription: true,
-                //     introductionImage: true,
-                //     coverImageUrl: true,
-                //     bannerImageUrl: true,
-                //     storyGenres: {
-                //         select: {
-                //             storyGenre: true
-                //         }
-                //     },
-                //     overview: true,
-                //     publishedAt: true,
-                //     genres: true,
-                //     user: {
-                //         select: {
-                //             id: true,
-                //             name: true,
-                //             email: true
-                //         }
-                //     }
-                // },
                 include: {
                     storyGenres: {
                         select: {
@@ -129,8 +125,6 @@ export class StoryService implements IStoryService {
                             image: true,
                             status: true,
                             publishedAt: true,
-
-
                         }
                     }
                 },
@@ -138,12 +132,15 @@ export class StoryService implements IStoryService {
                 take: limitNumber,
                 orderBy: { projectTitle: 'desc' },
             });
-    
-            const genres = await this.storyGenreRepo.getAll();
-    
-            res.status(200).json({ 
-                stories, 
-                genres, 
+
+            const allGenres = await this.storyGenreRepo.getAll();
+
+            res.status(200).json({
+                stories,
+                genres: allGenres,
+                appliedFilters: {
+                    genreIds: genreIds.length > 0 ? genreIds : undefined
+                },
                 pagination: {
                     currentPage: pageNumber,
                     itemsPerPage: limitNumber,
@@ -152,12 +149,12 @@ export class StoryService implements IStoryService {
                     hasNextPage: pageNumber < totalPages,
                     hasPreviousPage: pageNumber > 1
                 },
-                error: false, 
-                message: "success" 
+                error: false,
+                message: "success"
             });
-    
+
         } catch (error) {
-            this.errorService.handleErrorResponse(error)(res);            
+            this.errorService.handleErrorResponse(error)(res);
         }
     }
 
@@ -167,29 +164,29 @@ export class StoryService implements IStoryService {
     ): Promise<void> => {
         const { stories } = req.body;
         console.log(stories);
-        
-        try{
+
+        try {
             const user: IJwtPayload = req.user as IJwtPayload;
 
             stories.forEach(async (story: any) => {
 
-                const newStory = await this.storyRepo.create({ 
+                const newStory = await this.storyRepo.create({
                     data: {
-                        userId: user?.id,                 
+                        userId: user?.id,
                         title: story?.story,
                         overview: story?.overview?.txt,
                         genre: story?.genre?.name,
                         slug: _.kebabCase(story.story),
-                        type:  'story-board',
+                        type: 'story-board',
                         imageUrl: story?.overview?.imageUrl ? story?.overview?.imageUrl : null
                     }
                 }) as Story;
 
                 story.characters.forEach(async (character: any) => {
-                    const newCharacter = await this.characterRepo.create({ 
+                    const newCharacter = await this.characterRepo.create({
                         data: {
-                            storyId: newStory?.id,                 
-                            imageUrl: character?.imageUrl ? character?.imageUrl : null,                                         
+                            storyId: newStory?.id,
+                            imageUrl: character?.imageUrl ? character?.imageUrl : null,
                             name: character?.txt?.name,
                             description: character?.txt?.description,
                             age: character?.txt?.age.toString(),
@@ -199,19 +196,19 @@ export class StoryService implements IStoryService {
                 });
 
                 story.scenes.forEach(async (scene: any, index: number) => {
-                    const newScene = await this.sceneRepo.create({ 
+                    const newScene = await this.sceneRepo.create({
                         data: {
-                            storyId: newStory?.id,                 
+                            storyId: newStory?.id,
                             imageUrl: scene?.imageUrl ? scene?.imageUrl : null,
                             content: scene?.txt,
-                            order: (index + 1)      
+                            order: (index + 1)
                         }
                     }) as Scene;
                 });
             });
 
             res.status(201).json({ data: { stories, user }, error: false, message: "success" });
-        
+
         } catch (error) {
             this.errorService.handleErrorResponse(error)(res);
         }
@@ -225,26 +222,26 @@ export class StoryService implements IStoryService {
 
         const { overview, isFree, price } = req.body;
         console.log({ overview, isFree, price });
-        
+
         try {
-            const user: IJwtPayload = req.user as IJwtPayload;    
+            const user: IJwtPayload = req.user as IJwtPayload;
 
             if (!user?.id) throw new Error("User Not Found");
             if (!id) throw new Error("Kindly provide a story ID");
-            
+
             const story: any = await this.storyRepo.get({
                 where: {
                     id: id,
-                    userId: user?.id,   
+                    userId: user?.id,
                 }
             });
-            
+
             if (!story) throw new Error("Story Not Found");
 
             const updateStory: any = await this.storyRepo.update({
-                where: { 
+                where: {
                     id: id,
-                    userId: user?.id,   
+                    userId: user?.id,
                 },
                 data: {
                     ...(overview && { overview: overview }),
@@ -252,18 +249,18 @@ export class StoryService implements IStoryService {
                     ...(price && { price: price }),
                 }
             });
-            
-            res.status(200).json({ 
-                data: { 
+
+            res.status(200).json({
+                data: {
                     story: updateStory
-                }, 
-                error: false, 
-                message: "success" 
+                },
+                error: false,
+                message: "success"
             });
 
         } catch (error) {
-            console.log(error);            
-            this.errorService.handleErrorResponse(error)(res);     
+            console.log(error);
+            this.errorService.handleErrorResponse(error)(res);
         }
 
     }
@@ -273,10 +270,10 @@ export class StoryService implements IStoryService {
     ): Promise<void> => {
         const { id } = req.params;
 
-        const { 
-            storyId, 
-            currentStep, 
-            currentStepUrl, 
+        const {
+            storyId,
+            currentStep,
+            currentStepUrl,
             currentPlotStep,
             introductionStep,
             writingStep,
@@ -285,7 +282,7 @@ export class StoryService implements IStoryService {
             status,
             publishedAt,
             overview,
-            isFree, 
+            isFree,
             price,
             creatorName,
 
@@ -297,13 +294,13 @@ export class StoryService implements IStoryService {
             suggestedCharacters,
             introductionLocked,
             introductionSummary,
-            
+
             // INCITING EVENT
-            typeOfEvent,                    
-            causeOfTheEvent,                    
-            stakesAndConsequences,                    
-            incitingIncidentSetting,                    
-            incitingIncidentTone,  
+            typeOfEvent,
+            causeOfTheEvent,
+            stakesAndConsequences,
+            incitingIncidentSetting,
+            incitingIncidentTone,
             incitingIncidentExtraDetails,
             incitingIncidentLocked,
             incitingIncidentSummary,
@@ -342,9 +339,9 @@ export class StoryService implements IStoryService {
             pinchPointsAndSecondPlotPointSummary,
 
             // CLIMAX & FALLING ACTION
-            finalChallenge,  
-            challengeOutcome, 
-            storyResolution, 
+            finalChallenge,
+            challengeOutcome,
+            storyResolution,
             climaxAndFallingActionSetting,
             climaxAndFallingActionTone,
             climaxAndFallingActionExtraDetails,
@@ -363,23 +360,23 @@ export class StoryService implements IStoryService {
 
             // IMAGES
             imageUrl,
-            imageStatus,                   
-            imageId,                       
+            imageStatus,
+            imageId,
             introductionImage,
             incitingIncidentImage,
             firstPlotPointImage,
             risingActionAndMidpointImage,
             pinchPointsAndSecondPlotPointImage,
-            climaxAndFallingActionImage,           
+            climaxAndFallingActionImage,
             resolutionImage,
 
             setting,
-            storyStarter, 
+            storyStarter,
             writeFromScratch,
             introductionSuggestions,
             expositionSetting, // ACT 1 
-            storyPlot, 
-            hookSetting, 
+            storyPlot,
+            hookSetting,
             toneSetting,
             stakeSetting,
             incitingEventSetting,
@@ -408,24 +405,24 @@ export class StoryService implements IStoryService {
         } = req.body;
 
         try {
-            const user: IJwtPayload = req.user as IJwtPayload;    
+            const user: IJwtPayload = req.user as IJwtPayload;
 
             if (!user?.id) throw new Error("User Not Found");
             if (!id) throw new Error("Kindly provide a story ID");
-            
+
             const story: any = await this.storyRepo.get({
                 where: {
                     id: id,
-                    userId: user?.id,   
+                    userId: user?.id,
                 }
             });
-            
+
             if (!story) throw new Error("Story Not Found");
 
             const updateStory: any = await this.storyRepo.update({
-                where: { 
+                where: {
                     id: id,
-                    userId: user?.id,   
+                    userId: user?.id,
                 },
                 data: {
                     ...(projectTitle && { projectTitle: projectTitle }),
@@ -442,15 +439,15 @@ export class StoryService implements IStoryService {
                     }),
                     ...(introductionStep && {
                         introductionStep: introductionStep
-                    }),   
+                    }),
 
                     ...(status && { status: status }),
                     ...(overview && { overview: overview }),
                     ...(isFree && { isFree: isFree }),
                     ...(price && { price: price }),
-                    
+
                     ...(publishedAt && { publishedAt: publishedAt }),
-                    
+
                     ...(writingStep && { writingStep: writingStep }),
 
                     // IMAGES
@@ -463,7 +460,7 @@ export class StoryService implements IStoryService {
                     ...(firstPlotPointImage && { firstPlotPointImage: firstPlotPointImage }),
                     ...(risingActionAndMidpointImage && { risingActionAndMidpointImage: risingActionAndMidpointImage }),
                     ...(pinchPointsAndSecondPlotPointImage && { pinchPointsAndSecondPlotPointImage: pinchPointsAndSecondPlotPointImage }),
-                    ...(climaxAndFallingActionImage && { climaxAndFallingActionImage: climaxAndFallingActionImage }),           
+                    ...(climaxAndFallingActionImage && { climaxAndFallingActionImage: climaxAndFallingActionImage }),
                     ...(resolutionImage && { resolutionImage: resolutionImage }),
 
                     // INTRODUCTION
@@ -476,32 +473,32 @@ export class StoryService implements IStoryService {
                     ...(setting && { setting: setting }),
 
                     // INCITING INCIDENT
-                    ...(typeOfEvent && { typeOfEvent: typeOfEvent }),                    
-                    ...(causeOfTheEvent && { causeOfTheEvent: causeOfTheEvent }),                    
-                    ...(stakesAndConsequences && { stakesAndConsequences: stakesAndConsequences }),                    
-                    ...(incitingIncidentSetting && { incitingIncidentSetting: incitingIncidentSetting }),                    
-                    ...(incitingIncidentTone && { incitingIncidentTone: incitingIncidentTone }),  
-                    ...(incitingIncidentExtraDetails && { incitingIncidentExtraDetails: incitingIncidentExtraDetails }),  
-                    ...(incitingIncidentLocked && { incitingIncidentLocked: incitingIncidentLocked }),  
-                    
+                    ...(typeOfEvent && { typeOfEvent: typeOfEvent }),
+                    ...(causeOfTheEvent && { causeOfTheEvent: causeOfTheEvent }),
+                    ...(stakesAndConsequences && { stakesAndConsequences: stakesAndConsequences }),
+                    ...(incitingIncidentSetting && { incitingIncidentSetting: incitingIncidentSetting }),
+                    ...(incitingIncidentTone && { incitingIncidentTone: incitingIncidentTone }),
+                    ...(incitingIncidentExtraDetails && { incitingIncidentExtraDetails: incitingIncidentExtraDetails }),
+                    ...(incitingIncidentLocked && { incitingIncidentLocked: incitingIncidentLocked }),
+
                     // FIRST PLOT POINT
-                    ...(protagonistGoal && { protagonistGoal: protagonistGoal } ),
-                    ...(protagonistTriggerToAction && { protagonistTriggerToAction: protagonistTriggerToAction } ),
-                    ...(obstaclesProtagonistWillFace && { obstaclesProtagonistWillFace: obstaclesProtagonistWillFace } ),
-                    ...(firstPlotPointCharacters && { firstPlotPointCharacters: firstPlotPointCharacters } ),
-                    ...(firstPlotPointSetting && { firstPlotPointSetting: firstPlotPointSetting } ),
-                    ...(firstPlotPointTone && { firstPlotPointTone: firstPlotPointTone } ),
-                    ...(firstPlotLocked && { firstPlotLocked: firstPlotLocked } ),
-                    ...(firstPlotPointExtraDetails && { firstPlotPointExtraDetails: firstPlotPointExtraDetails } ),
+                    ...(protagonistGoal && { protagonistGoal: protagonistGoal }),
+                    ...(protagonistTriggerToAction && { protagonistTriggerToAction: protagonistTriggerToAction }),
+                    ...(obstaclesProtagonistWillFace && { obstaclesProtagonistWillFace: obstaclesProtagonistWillFace }),
+                    ...(firstPlotPointCharacters && { firstPlotPointCharacters: firstPlotPointCharacters }),
+                    ...(firstPlotPointSetting && { firstPlotPointSetting: firstPlotPointSetting }),
+                    ...(firstPlotPointTone && { firstPlotPointTone: firstPlotPointTone }),
+                    ...(firstPlotLocked && { firstPlotLocked: firstPlotLocked }),
+                    ...(firstPlotPointExtraDetails && { firstPlotPointExtraDetails: firstPlotPointExtraDetails }),
 
                     // RISING ACTION & MIDPOINT
-                    ...(challengesProtagonistFaces && { challengesProtagonistFaces: challengesProtagonistFaces }),                       
-                    ...(protagonistPerspectiveChange && { protagonistPerspectiveChange: protagonistPerspectiveChange }),                       
-                    ...(majorEventPropellingClimax && { majorEventPropellingClimax: majorEventPropellingClimax }),                       
-                    ...(risingActionAndMidpointCharacters && { risingActionAndMidpointCharacters: risingActionAndMidpointCharacters }),                                                    
-                    ...(risingActionAndMidpointSetting && { risingActionAndMidpointSetting: risingActionAndMidpointSetting }),                      
-                    ...(risingActionAndMidpointTone && { risingActionAndMidpointTone: risingActionAndMidpointTone }), 
-                    ...(risingActionAndMidpointExtraDetails && { risingActionAndMidpointExtraDetails: risingActionAndMidpointExtraDetails }), 
+                    ...(challengesProtagonistFaces && { challengesProtagonistFaces: challengesProtagonistFaces }),
+                    ...(protagonistPerspectiveChange && { protagonistPerspectiveChange: protagonistPerspectiveChange }),
+                    ...(majorEventPropellingClimax && { majorEventPropellingClimax: majorEventPropellingClimax }),
+                    ...(risingActionAndMidpointCharacters && { risingActionAndMidpointCharacters: risingActionAndMidpointCharacters }),
+                    ...(risingActionAndMidpointSetting && { risingActionAndMidpointSetting: risingActionAndMidpointSetting }),
+                    ...(risingActionAndMidpointTone && { risingActionAndMidpointTone: risingActionAndMidpointTone }),
+                    ...(risingActionAndMidpointExtraDetails && { risingActionAndMidpointExtraDetails: risingActionAndMidpointExtraDetails }),
                     ...(risingActionAndMidpointLocked && { risingActionAndMidpointLocked: risingActionAndMidpointLocked }),
 
                     // PINCH POINT & SECOND PLOT POINT
@@ -539,7 +536,7 @@ export class StoryService implements IStoryService {
                         thematicElements: writeFromScratch.thematicElements,
                         thematicOptions: writeFromScratch.thematicOptions,
                         suspenseTechnique: writeFromScratch.suspenseTechnique,
-                        suspenseTechniqueDescription: writeFromScratch.suspenseTechniqueDescription, 
+                        suspenseTechniqueDescription: writeFromScratch.suspenseTechniqueDescription,
                     }),
                     ...(storyStarter && {
                         genre: storyStarter.genre,
@@ -547,46 +544,46 @@ export class StoryService implements IStoryService {
                         thematicElements: storyStarter.thematicElements,
                         thematicOptions: storyStarter.thematicOptions,
                         suspenseTechnique: storyStarter.suspenseTechnique,
-                        suspenseTechniqueDescription: storyStarter.suspenseTechniqueDescription, 
+                        suspenseTechniqueDescription: storyStarter.suspenseTechniqueDescription,
                     }),
                     ...(storyPlot && {
-                        title: storyPlot.title,     
-                        slug: _.kebabCase(storyPlot.title),   
-                        overview: storyPlot.plot   
+                        title: storyPlot.title,
+                        slug: _.kebabCase(storyPlot.title),
+                        overview: storyPlot.plot
                     }),
                     ...(introductionSuggestions && {
-                        setting: introductionSuggestions?.setting,            
+                        setting: introductionSuggestions?.setting,
                         title: introductionSuggestions.title,
-                        slug: _.kebabCase(introductionSuggestions.title),   
+                        slug: _.kebabCase(introductionSuggestions.title),
                         overview: introductionSuggestions.plot,
                     }),
                     ...(incitingEventSetting && {
-                        overview: incitingEventSetting?.newPlot, 
+                        overview: incitingEventSetting?.newPlot,
                     }),
                     ...(suggestedCharacters && {
                         suggestedCharacters: suggestedCharacters
                     }),
                 }
             });
-            
+
             const storyStructure: any = await this.storyStructureRepo.update({
                 where: { storyId: id },
                 data: {
                     ...(introduceProtagonistAndOrdinaryWorld && { introduceProtagonistAndOrdinaryWorld: introduceProtagonistAndOrdinaryWorld }),
                     ...(incitingIncident && { incitingIncident: incitingIncident }),
-                    ...(firstPlotPoint && { firstPlotPoint: firstPlotPoint } ),
-                    ...(risingActionAndMidpoint && { risingActionAndMidpoint: risingActionAndMidpoint } ),
-                    ...(pinchPointsAndSecondPlotPoint && { pinchPointsAndSecondPlotPoint: pinchPointsAndSecondPlotPoint } ),
-                    ...(climaxAndFallingAction && { climaxAndFallingAction: climaxAndFallingAction } ),
-                    ...(resolution && { resolution: resolution } ),                    
+                    ...(firstPlotPoint && { firstPlotPoint: firstPlotPoint }),
+                    ...(risingActionAndMidpoint && { risingActionAndMidpoint: risingActionAndMidpoint }),
+                    ...(pinchPointsAndSecondPlotPoint && { pinchPointsAndSecondPlotPoint: pinchPointsAndSecondPlotPoint }),
+                    ...(climaxAndFallingAction && { climaxAndFallingAction: climaxAndFallingAction }),
+                    ...(resolution && { resolution: resolution }),
 
-                    ...(introductionSummary && { introductionSummary: introductionSummary } ),
-                    ...(incitingIncidentSummary && { incitingIncidentSummary: incitingIncidentSummary }),            
-                    ...(firstPlotPointSummary && { firstPlotPointSummary: firstPlotPointSummary }),  
-                    ...(risingActionAndMidpointSummary && { risingActionAndMidpointSummary: risingActionAndMidpointSummary }), 
-                    ...(pinchPointsAndSecondPlotPointSummary && { pinchPointsAndSecondPlotPointSummary: pinchPointsAndSecondPlotPointSummary }), 
-                    ...(climaxAndFallingActionSummary && { climaxAndFallingActionSummary: climaxAndFallingActionSummary }),  
-                    ...(resolutionSummary && { resolutionSummary: resolutionSummary }),               
+                    ...(introductionSummary && { introductionSummary: introductionSummary }),
+                    ...(incitingIncidentSummary && { incitingIncidentSummary: incitingIncidentSummary }),
+                    ...(firstPlotPointSummary && { firstPlotPointSummary: firstPlotPointSummary }),
+                    ...(risingActionAndMidpointSummary && { risingActionAndMidpointSummary: risingActionAndMidpointSummary }),
+                    ...(pinchPointsAndSecondPlotPointSummary && { pinchPointsAndSecondPlotPointSummary: pinchPointsAndSecondPlotPointSummary }),
+                    ...(climaxAndFallingActionSummary && { climaxAndFallingActionSummary: climaxAndFallingActionSummary }),
+                    ...(resolutionSummary && { resolutionSummary: resolutionSummary }),
                 }
             });
 
@@ -611,14 +608,14 @@ export class StoryService implements IStoryService {
                 });
 
                 // genres.forEach(async (genre: any) => {
-                    
+
                 //     const existingGenreOnStory = await this.genresOnStoriesRepo.delete({
                 //         where: {
                 //           storyId: story?.id,
                 //           storyGenreId: genre.id,
                 //         },
                 //     });
-                                        
+
                 //     const genreOnStory = await this.genresOnStoriesRepo.create({
                 //         data: {
                 //             storyId: story?.id,
@@ -650,11 +647,11 @@ export class StoryService implements IStoryService {
             }
 
             if (addProtagonist?.protagonists) {
-                await this.createCharacters(addProtagonist?.protagonists, id, user?.id);                                    
+                await this.createCharacters(addProtagonist?.protagonists, id, user?.id);
             }
 
             if (suggestedCharacters > 0) {
-                await this.createCharacters(suggestedCharacters, id, user?.id);                    
+                await this.createCharacters(suggestedCharacters, id, user?.id);
             }
 
             // if (storyStarter?.plotSuggestions?.length > 0) {
@@ -666,18 +663,18 @@ export class StoryService implements IStoryService {
                 include: { plotSuggestions: true, characters: true, storyStructure: true }
             });
 
-            res.status(200).json({ 
-                data: { 
-                    storyId: id, 
-                    story: updatedStory 
-                }, 
-                error: false, 
-                message: "success" 
+            res.status(200).json({
+                data: {
+                    storyId: id,
+                    story: updatedStory
+                },
+                error: false,
+                message: "success"
             });
 
         } catch (error) {
-            console.log(error);            
-            this.errorService.handleErrorResponse(error)(res);     
+            console.log(error);
+            this.errorService.handleErrorResponse(error)(res);
         }
     }
 
@@ -691,18 +688,18 @@ export class StoryService implements IStoryService {
         const { projectTitle, projectDescription, creatorName } = req.body;
 
         try {
-            const user: IJwtPayload = req.user as IJwtPayload;   
+            const user: IJwtPayload = req.user as IJwtPayload;
 
             if (!user?.id) throw new Error("User Not Found");
-            
+
             const authUser = await this.userRepo.getUnique({ where: { id: user?.id } }) as User | null;
             if (!authUser?.id) throw new Error("User Not Found");
 
-            const newStory = await this.storyRepo.create({ 
+            const newStory = await this.storyRepo.create({
                 data: {
-                    userId: user?.id,   
-                    status: 'draft',    
-                    type: 'from-scratch',          
+                    userId: user?.id,
+                    status: 'draft',
+                    type: 'from-scratch',
                     projectTitle,
                     projectDescription,
                     currentPlotStep: 1,
@@ -711,28 +708,28 @@ export class StoryService implements IStoryService {
             }) as Story;
 
             if (!newStory) throw new Error("Could not create new story project");
-                        
+
             const userUpdated = await this.userRepo.update({
                 where: { id: authUser?.id },
                 data: {
                     name: creatorName
-                } 
-            });            
+                }
+            });
 
-            const storyStructure = await this.storyStructureRepo.create({ 
+            const storyStructure = await this.storyStructureRepo.create({
                 data: {
-                    storyId: newStory?.id                                       
+                    storyId: newStory?.id
                 }
             }) as Story;
 
-            if (!storyStructure){
+            if (!storyStructure) {
                 await this.storyRepo.delete({ where: { id: newStory?.id } });
                 throw new Error("Could not create new project")
             };
 
-            let storyId:string = newStory?.id;
-            let userId:string = authUser?.id;
-            
+            let storyId: string = newStory?.id;
+            let userId: string = authUser?.id;
+
             // ADD FREE ASSETS
             this.createFreeAssets(storyId, userId)
 
@@ -745,16 +742,16 @@ export class StoryService implements IStoryService {
                     plotSuggestions: true,
                     storyStructure: true,
                 },
-            })  as Story;
+            }) as Story;
 
-            res.status(201).json({ 
-                story, 
-                error: false, 
-                message: "success" 
+            res.status(201).json({
+                story,
+                error: false,
+                message: "success"
             });
 
         } catch (error) {
-            console.error(error);       
+            console.error(error);
             this.errorService.handleErrorResponse(error)(res);
         }
     }
@@ -767,16 +764,16 @@ export class StoryService implements IStoryService {
 
         const { status, publishedAt, depositAddress, tipLink, price, isFree, overview } = req.body;
         try {
-            const user: IJwtPayload = req.user as IJwtPayload;    
+            const user: IJwtPayload = req.user as IJwtPayload;
             if (!user?.id) throw new Error("User Not Found");
             if (!id) throw new Error("Kindly provide a story ID");
 
             const story: any = await this.storyRepo.update({
-                where: { 
+                where: {
                     id: id,
-                    userId: user?.id,   
+                    userId: user?.id,
                 },
-                data: {                                        
+                data: {
                     ...(overview && { overview: overview }),
                     ...(publishedAt && { publishedAt: publishedAt }),
                     ...(status && { status: status }),
@@ -785,24 +782,24 @@ export class StoryService implements IStoryService {
                 }
             });
 
-            if (status === "published") {                
+            if (status === "published") {
                 const userUpdated = await this.userRepo.update({
                     where: { id: user?.id },
                     data: {
                         ...(depositAddress && { depositAddress: depositAddress }),
                         ...(tipLink && { tipLink: tipLink }),
-                    } 
-                });  
+                    }
+                });
             }
 
-            res.status(201).json({ 
-                story, 
-                error: false, 
-                message: "success" 
+            res.status(201).json({
+                story,
+                error: false,
+                message: "success"
             });
 
         } catch (error) {
-            this.errorService.handleErrorResponse(error)(res);            
+            this.errorService.handleErrorResponse(error)(res);
         }
     }
 
@@ -812,8 +809,8 @@ export class StoryService implements IStoryService {
     ): Promise<void> => {
         const { id } = req.params;
         try {
-            const user: IJwtPayload = req.user as IJwtPayload;    
-            
+            const user: IJwtPayload = req.user as IJwtPayload;
+
             const story: any = await this.storyRepo.get({
                 where: {
                     id: id,
@@ -824,18 +821,18 @@ export class StoryService implements IStoryService {
                 }
             });
 
-            if (!story) throw new Error("Story Not Found");                  
-            if(story.status === "published") throw new Error("Story has been published");
-            
+            if (!story) throw new Error("Story Not Found");
+            if (story.status === "published") throw new Error("Story has been published");
+
             const transaction: any = await this.transactionRepo.get({
-                where: { 
-                    storyId: id, 
+                where: {
+                    storyId: id,
                     type: "read-story",
                     status: "completed"
                 },
-            });   
+            });
 
-            if(transaction) throw new Error("Cannot delete a story that has been paid for");
+            if (transaction) throw new Error("Cannot delete a story that has been paid for");
 
             // await this.transaction([
             //     // // Delete genre relations
@@ -858,19 +855,19 @@ export class StoryService implements IStoryService {
             //     // })
             // ]);
 
-            
+
             await this.genresOnStoriesRepo.deleteMany({
                 where: {
-                    storyId: id, 
+                    storyId: id,
                 }
             });
 
             await this.storyAccessRepo.deleteMany({
                 where: {
-                    storyId: id, 
+                    storyId: id,
                 }
             });
- 
+
             await this.storyRepo.delete({
                 where: {
                     id: id,
@@ -881,8 +878,8 @@ export class StoryService implements IStoryService {
             res.status(200).json({ error: false, message: "success" });
 
         } catch (error) {
-            console.log(error);            
-            this.errorService.handleErrorResponse(error)(res);                        
+            console.log(error);
+            this.errorService.handleErrorResponse(error)(res);
         }
     }
 
@@ -890,39 +887,39 @@ export class StoryService implements IStoryService {
         req: CustomRequest,
         res: Response
     ): Promise<void> => {
-        try {            
+        try {
             const { characterId, storyId, imageUrl } = req.body;
 
             const character: any = await this.characterRepo.get({
                 where: {
                     id: characterId,
-                    storyId, 
+                    storyId,
                 }
             });
-            
+
             if (!character) throw new Error("Character Not Found");
 
             const updatedCharacter: any = await this.characterRepo.update({
-                where: { 
+                where: {
                     id: characterId,
-                    storyId  
+                    storyId
                 },
                 data: {
                     imageUrl
                 },
             });
 
-            res.status(200).json({ 
-                data: { updatedCharacter }, 
-                error: false, 
-                message: "success" 
+            res.status(200).json({
+                data: { updatedCharacter },
+                error: false,
+                message: "success"
             });
         } catch (error) {
-            console.log(error);            
-            this.errorService.handleErrorResponse(error)(res);                 
+            console.log(error);
+            this.errorService.handleErrorResponse(error)(res);
         }
     }
-    
+
     public createStoryBook = async (
         req: CustomRequest,
         res: Response
@@ -931,24 +928,24 @@ export class StoryService implements IStoryService {
 
         try {
             const user: IJwtPayload = req.user as IJwtPayload;
-            
+
             stories.forEach(async (story: any) => {
 
-                const newStory = await this.storyRepo.create({ 
+                const newStory = await this.storyRepo.create({
                     data: {
-                        userId: user?.id,                 
+                        userId: user?.id,
                         title: story?.storyTitle,
                         genre: story?.genre,
-                        type:  'book',
+                        type: 'book',
                         slug: _.kebabCase(story.storyTitle),
                     }
                 }) as Story;
-                
+
 
                 story.pages.forEach(async (page: any, index: number) => {
-                    const newPage = await this.pageRepo.create({ 
+                    const newPage = await this.pageRepo.create({
                         data: {
-                            storyId: newStory?.id,                 
+                            storyId: newStory?.id,
                             imageUrl: page?.imageUrl ? page?.imageUrl : null,
                             content: page?.content,
                             number: parseInt(page?.number)
@@ -961,17 +958,17 @@ export class StoryService implements IStoryService {
             res.status(201).json({ data: { stories, user }, error: false, message: "success" });
 
         } catch (error) {
-            console.log(error);            
-            this.errorService.handleErrorResponse(error)(res);            
+            console.log(error);
+            this.errorService.handleErrorResponse(error)(res);
         }
     }
 
     public getStoryScene = async (req: Request, res: Response): Promise<void> => {
         try {
             const { id } = req.params;
-        
+
             if (!id) throw new Error("Invalid id");
-        
+
             const story: any = await this.storyRepo.get({
                 where: {
                     id: id
@@ -986,28 +983,28 @@ export class StoryService implements IStoryService {
                         },
                     },
                     characters: true,
-                    scenes: true,                
+                    scenes: true,
                     pages: true,
                 },
             });
-        
+
             if (!story) throw new Error("Story not found");
-        
+
             res.status(200).json({ story, error: false, message: "success" });
         } catch (error) {
-          this.errorService.handleErrorResponse(error)(res);
+            this.errorService.handleErrorResponse(error)(res);
         }
     };
 
     public getStoryScenes = async (req: CustomRequest, res: Response): Promise<void> => {
-        try {     
+        try {
             const { page = 1, limit, type = 'book' } = req.query;
 
             // const parsedLimit: number = parseInt(String(limit), 10);
             // const parsedPage: number = parseInt(String(page), 10);
 
             const user: IJwtPayload = req.user as IJwtPayload;
-            
+
             let filterOptions: object = { userId: user.id, type };
 
             // const totalCount: number = await this.storyRepo.count(filterOptions); // Assuming you have a method to count total challenges
@@ -1029,30 +1026,30 @@ export class StoryService implements IStoryService {
             // const hasNextPage: boolean = parsedPage < totalPages;
             // const hasPrevPage: boolean = parsedPage > 1;
 
-            res.status(200).json({ 
-                stories, 
+            res.status(200).json({
+                stories,
                 // totalPages, 
                 // hasNextPage, 
                 // hasPrevPage, 
-                error: false, 
-                message: "Stories successfully retrieved" 
-            });        
+                error: false,
+                message: "Stories successfully retrieved"
+            });
 
 
         } catch (error) {
-            this.errorService.handleErrorResponse(error)(res);                        
+            this.errorService.handleErrorResponse(error)(res);
         }
     }
 
     public getStoriesFromScratch = async (req: CustomRequest, res: Response): Promise<void> => {
-        try {     
+        try {
             const { page = 1, limit, type = 'original' } = req.query;
 
             // const parsedLimit: number = parseInt(String(limit), 10);
             // const parsedPage: number = parseInt(String(page), 10);
 
             const user: IJwtPayload = req.user as IJwtPayload;
-            
+
             let filterOptions: object = { userId: user.id, type };
 
             // const totalCount: number = await this.storyRepo.count(filterOptions); // Assuming you have a method to count total challenges
@@ -1073,28 +1070,28 @@ export class StoryService implements IStoryService {
             // const hasNextPage: boolean = parsedPage < totalPages;
             // const hasPrevPage: boolean = parsedPage > 1;
 
-            res.status(200).json({ 
-                stories, 
+            res.status(200).json({
+                stories,
                 // totalPages, 
                 // hasNextPage, 
                 // hasPrevPage, 
-                error: false, 
-                message: "Stories successfully retrieved" 
-            });        
+                error: false,
+                message: "Stories successfully retrieved"
+            });
 
 
         } catch (error) {
-            this.errorService.handleErrorResponse(error)(res);                        
+            this.errorService.handleErrorResponse(error)(res);
         }
     }
 
     public getUnauthenticatedUserStories = async (req: Request, res: Response): Promise<void> => {
-        try {     
+        try {
             const { page = 1, limit, } = req.query;
             const { id: userId } = req.params;
 
-            const parsedPage: number = parseInt(page as string, 10); 
-            const parsedLimit: number = parseInt(limit as string, 10); 
+            const parsedPage: number = parseInt(page as string, 10);
+            const parsedLimit: number = parseInt(limit as string, 10);
             let filter: object = { userId: userId };
             const totalCount: number = await this.storyRepo.count(filter);
             const offset = (parsedPage - 1) * parsedLimit;
@@ -1123,29 +1120,29 @@ export class StoryService implements IStoryService {
             const hasNextPage: boolean = parsedPage < totalPages;
             const hasPrevPage: boolean = parsedPage > 1;
 
-            res.status(200).json({ 
-                stories, 
-                totalPages, 
-                hasNextPage, 
-                hasPrevPage, 
-                error: false, 
-                message: "Stories successfully retrieved" 
-            });        
+            res.status(200).json({
+                stories,
+                totalPages,
+                hasNextPage,
+                hasPrevPage,
+                error: false,
+                message: "Stories successfully retrieved"
+            });
 
 
         } catch (error) {
-            this.errorService.handleErrorResponse(error)(res);                        
+            this.errorService.handleErrorResponse(error)(res);
         }
     }
 
-    
+
 
     public getStoryFromScratch = async (req: CustomRequest, res: Response): Promise<void> => {
         try {
             const { id } = req.params;
-            
+
             if (!id) throw new Error("Invalid id");
-            const user: IJwtPayload = req.user as IJwtPayload; 
+            const user: IJwtPayload = req.user as IJwtPayload;
 
             const authUser = await this.userRepo.getUnique({ where: { id: user?.id } }) as User | null;
 
@@ -1169,21 +1166,21 @@ export class StoryService implements IStoryService {
                     storyGenres: true
                 }
             });
-        
+
             if (!story) throw new Error("Story not found");
 
             const paidStoryTransaction = await this.transactionRepo.count({
                 storyId: id,
                 type: "read-story",
-                status: "completed"                
+                status: "completed"
             })
 
             // const response = this.getStoryResponse(story);
             // console.log(response);            
-        
+
             res.status(200).json({ story, paidStoryTransaction, error: false, message: "success" });
         } catch (error) {
-            console.log(error);            
+            console.log(error);
             this.errorService.handleErrorResponse(error)(res);
         }
     };
@@ -1192,15 +1189,15 @@ export class StoryService implements IStoryService {
         try {
             const { id } = req.params;
             if (!id) throw new Error("Invalid id");
-            const user: IJwtPayload = req.user as IJwtPayload;   
+            const user: IJwtPayload = req.user as IJwtPayload;
 
             const transaction: any = await this.transactionRepo.get({
-                where: { 
-                    storyId: id, 
+                where: {
+                    storyId: id,
                     userId: user?.id,
                     type: "read-story"
                 },
-            });            
+            });
 
             if (!transaction) {
                 const story: any = await this.storyRepo.get({
@@ -1226,7 +1223,7 @@ export class StoryService implements IStoryService {
                         },
                     }
                 });
-    
+
                 res.status(200).json({ story, error: false, message: "success" });
                 return;
             }
@@ -1241,10 +1238,10 @@ export class StoryService implements IStoryService {
                         user: true
                     }
                 });
-    
+
                 res.status(200).json({ story, error: false, message: "success" });
-                return;                
-            }else{
+                return;
+            } else {
                 const story: any = await this.storyRepo.get({
                     where: {
                         id: id
@@ -1256,23 +1253,23 @@ export class StoryService implements IStoryService {
                         user: true
                     }
                 });
-    
+
                 res.status(200).json({ story, error: false, message: "success" });
                 return;
-            }            
+            }
 
         } catch (error) {
-            this.errorService.handleErrorResponse(error)(res);            
+            this.errorService.handleErrorResponse(error)(res);
         }
     }
 
 
 
     private createCharacters = async (characterSuggestions: [], storyId: string, userId: string) => {
-        console.log({characterSuggestions});            
+        console.log({ characterSuggestions });
 
         characterSuggestions.forEach(item => {
-            console.log({item});            
+            console.log({ item });
         });
 
         // GET ALL CHARACTERS
@@ -1288,31 +1285,31 @@ export class StoryService implements IStoryService {
         });
 
         characterSuggestions.forEach(async (character: any) => {
-            const newCharacter = await this.characterRepo.create({ 
+            const newCharacter = await this.characterRepo.create({
                 data: {
-                    storyId: storyId,   
-                    name: character?.name,    
-                    age: character?.age,    
-                    skinTone: character?.skinTone,    
-                    role: character?.role,    
-                    hair: character?.hair,    
-                    facialFeatures: character?.facialFeatures, 
-                    isProtagonist: character?.isProtagonist ?? false,   
-                    gender: character?.gender,   
-                    angst: character?.angst,    
-                    backstory: character?.backstory,    
-                    coreValues: character?.coreValues,    
-                    personalityTraits: character?.personalityTraits,    
-                    motivations: character?.motivations,    
-                    relationships: character?.relationships,   
-                    relationshipsWithOtherCharacters: character?.relationshipsWithOtherCharacters,    
-                    skills: character?.skills,    
-                    weaknesses: character?.weaknesses,    
-                    strengths: character?.strengths,    
-                    speechPattern: character?.speechPattern,    
-                    description: character?.description,    
-                    summary: character?.summary,    
-                                                
+                    storyId: storyId,
+                    name: character?.name,
+                    age: character?.age,
+                    skinTone: character?.skinTone,
+                    role: character?.role,
+                    hair: character?.hair,
+                    facialFeatures: character?.facialFeatures,
+                    isProtagonist: character?.isProtagonist ?? false,
+                    gender: character?.gender,
+                    angst: character?.angst,
+                    backstory: character?.backstory,
+                    coreValues: character?.coreValues,
+                    personalityTraits: character?.personalityTraits,
+                    motivations: character?.motivations,
+                    relationships: character?.relationships,
+                    relationshipsWithOtherCharacters: character?.relationshipsWithOtherCharacters,
+                    skills: character?.skills,
+                    weaknesses: character?.weaknesses,
+                    strengths: character?.strengths,
+                    speechPattern: character?.speechPattern,
+                    description: character?.description,
+                    summary: character?.summary,
+
                 }
             }) as Character;
 
@@ -1332,14 +1329,14 @@ export class StoryService implements IStoryService {
                 where: { id: plotSuggestion?.id, storyId: storyId }
             });
         });
-        
+
         // SAVE INCOMING PLOT SUGGESTIONS
         plotSuggestions?.forEach(async (plotSuggestion: any) => {
-            const newPlotSuggestion = await this.plotSuggestionRepo.create({ 
+            const newPlotSuggestion = await this.plotSuggestionRepo.create({
                 data: {
-                    storyId: storyId,                 
-                    title: plotSuggestion?.title,                 
-                    slug: _.kebabCase(plotSuggestion?.title),                 
+                    storyId: storyId,
+                    title: plotSuggestion?.title,
+                    slug: _.kebabCase(plotSuggestion?.title),
                     plot: plotSuggestion?.plot
                 }
             }) as Story;
@@ -1365,17 +1362,17 @@ export class StoryService implements IStoryService {
         ];
 
         assetList.forEach(async (asset: { title: string, count: number }) => {
-            
+
             const assetItem: any = await this.assetRepo.getUnique({
                 where: { name: asset.title }
             });
 
             if (assetItem) {
                 for (let i = 0; i < asset.count; i++) {
-                    
+
                     this.assetTransactionRepo.create({
                         data: {
-                            description: asset.title === "story-chapter" ? `Chapter-${i+1}` : assetItem.description,
+                            description: asset.title === "story-chapter" ? `Chapter-${i + 1}` : assetItem.description,
                             assetId: assetItem?.id,
                             userId,
                             storyId,
