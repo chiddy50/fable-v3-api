@@ -109,7 +109,16 @@ export class StoryService implements IStoryService {
                             id: true,
                             name: true,
                             email: true,
-                            imageUrl: true
+                            imageUrl: true,
+                            _count: {
+                                select: {
+                                    stories: {
+                                        where: {
+                                            status: "published"
+                                        }
+                                    }
+                                }
+                            }
                         }
                     },
                     chapters: {
@@ -1114,7 +1123,11 @@ export class StoryService implements IStoryService {
                         },
                     },
                     user: true,
-
+                    _count: {
+                        select: {
+                            comments: true 
+                        }
+                    }
                 },
                 orderBy: { createdAt: 'desc' },
                 skip: Number(offset),
