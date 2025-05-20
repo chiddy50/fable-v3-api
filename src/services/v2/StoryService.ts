@@ -189,8 +189,6 @@ export class StoryServiceV2 implements IStoryService {
             if(selectedGenres) await this.addSelectedGenres(selectedGenres, newStory.id);
             if(selectedTargetAudience) await this.addSelectedTargetAudience(selectedTargetAudience, newStory.id);
 
-            
-
             res.status(201).json({ newStory, user, error: false, message: "success" });
 
         } catch (error) {
@@ -265,8 +263,17 @@ export class StoryServiceV2 implements IStoryService {
                             scenes: true  // This correctly includes scenes for each chapter
                         }
                     },
-                    storyAudiences: true,
-                    storyGenres: true
+                    storyAudiences: {
+                        select: {
+                            targetAudience: true
+                        }
+                    },
+                    // storyGenres: true,
+                    storyGenres: {
+                        select: {
+                            storyGenre: true
+                        }
+                    },
                 }
             });
         
