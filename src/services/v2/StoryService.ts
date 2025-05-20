@@ -315,7 +315,12 @@ export class StoryServiceV2 implements IStoryService {
                         }
                     },
                     storyGenres: true,
-                    comments: true
+                    comments: true,
+                    _count: {
+                        select: {
+                            comments: true 
+                        }
+                    }
                 }
             });
         

@@ -43,7 +43,7 @@ export class StoryService implements IStoryService {
 
             // Convert page and limit to numbers with defaults
             const pageNumber = parseInt(page as string, 10) || 1;
-            const limitNumber = parseInt(limit as string, 10) || 10;
+            const limitNumber = parseInt(limit as string, 10) || 15;
 
             // Build the filter object dynamically
             const filter: Record<string, any> = {};
@@ -125,6 +125,11 @@ export class StoryService implements IStoryService {
                             image: true,
                             status: true,
                             publishedAt: true,
+                        }
+                    },
+                    _count: {
+                        select: {
+                            comments: true 
                         }
                     }
                 },
