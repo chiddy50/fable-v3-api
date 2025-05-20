@@ -26,6 +26,7 @@ import StoryControllerV2 from "./controllers/v2/Story";
 import ChapterControllerV2 from "./controllers/v2/Chapter";
 import AuthenticationControllerV2 from "./controllers/v2/Authentication";
 import StoryCommentController from "./controllers/StoryComment";
+import StoryGenreController from "./controllers/StoryGenre";
 
 dotenv.config();
 
@@ -59,6 +60,8 @@ app.use("/scenes", SceneController);
 app.use("/credits", CreditTransactionController);
 
 app.use("/story-comments", StoryCommentController);
+app.use("/story-genres", StoryGenreController);
+
 
 // VERSION 2 ROUTES
 app.use("/v2/auth", AuthenticationControllerV2);
