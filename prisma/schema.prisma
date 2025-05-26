@@ -157,6 +157,16 @@ model Story {
   imageStatus                   String?
   imageId                       String?
 
+  synopsis                      String? @db.Text
+  storyStructureReason          String?
+
+  refinedProjectDescription    String? 
+
+  questions                     Json?
+  narrativeConceptSuggestions   Json?
+  narrativeConcept              Json?
+  synopsisList                  Json?
+
   type                          String?  // ai or original
   storyType                     String?  // novel or short-story
   overview                      String? @db.Text
@@ -519,6 +529,13 @@ model Character {
   id                                String   @id @default(cuid())
   storyId                                 String
   name                                    String
+  alias                                   String?
+
+  internalConflict                        String?
+  externalConflict                        String?
+  voice                                   String?
+  perspective                             String?
+
 
   // Goal-related fields
   whatTheyWant                            Json?

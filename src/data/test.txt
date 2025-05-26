@@ -1,0 +1,17 @@
+Act as a professional Author, Storyteller, Application and Product designer. I am building a storytelling application called Fable, here is what I want to achieve:
+Users can choose to create stories by either choosing original mode or AI assisted mode. 
+For the original mode user write with no A.I assistance. 
+For the AI assisted mode user provide a story idea and pass it to the A.I. Here is how the flow for the A.I assisted mode is.
+Step 1: 
+Users first choose between Short Stories or Novels. 
+Step 2:
+If they choose short story here are the story structures for them to choose from to use: Five Act structure, Freytag's Pyramid, Hero's Journey, In Medias Res, Seven Point, Single Effect and Three Act.
+If they choose novel here are the story structures for them to choose from to use: Five act structure, Freytag's Pyramid, Hero's Journey, Seven Point and Three Act.
+After choosing a story type either Novel or short story and then picking a story structure they then provide a story title, description, content type(Fiction, Non-fiction, educational, blog), genre, tone. 
+Then these data is passed to an LLM to generate a list of narrative concepts for the user to choose from. 
+When the user chooses a narrative concept, this and the other previously provided parameters are passed to the LLM as context to generate a short synopsis for the story.
+Step 3:
+After the synopsis has been generated we then move to the extraction of characters from the synopsis and creation of new characters to be added to the story. And there is a refine button to add the new added characters to the synopsis.
+Ensure to use this information as context for future questions I would ask.
+
+I need you to observe the story structures used to each story type .i.e novel & short story, then tell me if these structures are properly used in the right story type.
