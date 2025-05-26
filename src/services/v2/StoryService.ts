@@ -1,6 +1,7 @@
 import { IBase } from "../../repositories/BaseRepository";
 import { IAuth } from "../../shared/AuthService";
 import { IErrorService } from "../../shared/ErrorService";
+import { SynopsisInterface } from "../../interfaces/SynopsisInterface";
 import { Response, Request } from "express";
 import { Character, CustomRequest, IJwtPayload, Image, Page, Scene, Story, User } from "../../shared/Interface";
 import { slugify } from "../../shared/helpers";
@@ -73,9 +74,10 @@ export class StoryServiceV2 implements IStoryService {
                     slug: slug || null,
                     ...(storyType && { storyType: storyType }), // novel or short-story
                     ...(currentStep && { currentStep: currentStep ?? 1 }),
-                    ...(autoDetectStructure && { autoDetectStructure: autoDetectStructure }),
+                    ...(autoDetectStructure && { autoDetectStructure: autoDetectStructure === "true" ? true : false }),
                     ...(storyStructure && { structure: storyStructure }),
-                    status: "draft"
+                    status: "draft",
+                    synopsisList: []
                 },
             }) as Story;
 
@@ -158,7 +160,8 @@ export class StoryServiceV2 implements IStoryService {
         res: Response
     ): Promise<void> => {
         const { id } = req.params                                        
-        const { projectTitle, projectDescription, selectedTargetAudience, currentStep, selectedTones, type, contentType, selectedGenres, genres } = req.body;
+        const { projectTitle, projectDescription, selectedTargetAudience, currentStep, selectedTones, currentStepUrl, 
+            type, contentType, selectedGenres, genres } = req.body;
         
         try {
             const user: IJwtPayload = req.user as IJwtPayload;
@@ -183,13 +186,12 @@ export class StoryServiceV2 implements IStoryService {
                     ...(contentType && { contentType: contentType }),                    
                     ...(projectTitle && { slug: _.kebabCase(projectTitle) }),
                     ...(currentStep && { currentStep: currentStep }),                                        
+                    ...(currentStepUrl && { currentStepUrl: currentStepUrl }),                                        
                 }
             }) as Story;
 
             if(selectedGenres) await this.addSelectedGenres(selectedGenres, newStory.id);
             if(selectedTargetAudience) await this.addSelectedTargetAudience(selectedTargetAudience, newStory.id);
-
-            
 
             res.status(201).json({ newStory, user, error: false, message: "success" });
 
@@ -203,7 +205,10 @@ export class StoryServiceV2 implements IStoryService {
         res: Response
     ): Promise<void> => {
         const { id } = req.params;
-        const { generalChapterFee, applyFeeToAllChapters, projectTitle, projectDescription, currentChapterId, genres, currentStep } = req.body;
+        const { generalChapterFee, applyFeeToAllChapters, projectTitle, projectDescription, selectedTones,
+            currentChapterId, genres, currentStep, storyStructureReason, structure, synopsis, synopsisList, refinedProjectDescription,
+            narrativeConceptSuggestions, narrativeConcept, currentStepUrl, selectedTargetAudience, selectedGenres, contentType 
+        } = req.body;
         
         try {
             const user: IJwtPayload = req.user as IJwtPayload;
@@ -214,31 +219,229 @@ export class StoryServiceV2 implements IStoryService {
                 applyFeeToAllChaptersData = applyFeeToAllChapters === "true" ? true : false;
             } 
 
-            const newStory = await this.storyRepo.update({ 
+            let synopsisListArray: SynopsisInterface[] = [];
+
+            if (synopsis) {
+                const existingStory = await this.fetchStoryById(id);
+                const existingSynopses = existingStory?.synopsisList || [];
+                
+                // Deactivate all existing synopses and add new one
+                synopsisListArray = [
+                    ...existingSynopses.map((item: SynopsisInterface, index: number) => ({
+                        ...item,
+                        active: false,
+                        index: index + 1,                     
+                    })),
+                    { 
+                        ...synopsis, 
+                        index: existingSynopses.length + 1,  
+                        genres: existingStory.storyGenres,
+                        tone: existingStory.tone,
+                        storyAudiences: existingStory?.storyAudiences,
+                        contentType: existingStory?.contentType,
+                        narrativeConcept
+                    }
+                ];
+            }
+            
+
+            const updatedStory = await this.storyRepo.update({ 
                 where: { 
                     id: id,
                     userId: user?.id,   
                 },
                 data: {
                     ...(generalChapterFee && { generalChapterFee: generalChapterFee }),
+                    ...(storyStructureReason && { storyStructureReason: storyStructureReason }),
+                    ...(structure && { structure: structure }),
+                    ...(synopsis && { synopsis: synopsis?.content }),
+                    ...(synopsis && { synopsisList: synopsisListArray }),
+                    ...(synopsisList && { synopsisList: synopsisList }),
                     ...(currentChapterId && { currentChapterId: currentChapterId }),                    
                     ...(applyFeeToAllChapters && { applyFeeToAllChapters: applyFeeToAllChaptersData }),
                     ...(projectTitle && { projectTitle: projectTitle }),
                     ...(projectDescription && { projectDescription: projectDescription }),
+                    ...(contentType && { contentType: contentType }),                    
                     ...(projectTitle && { slug: _.kebabCase(projectTitle) }),
                     ...(genres && { genres: genres }),
-                    ...(currentStep && { currentStep: currentStep }),                    
-                }
+                    ...(currentStep && { currentStep: currentStep }),       
+                    ...(selectedTones && { tone: selectedTones }),                                       
+                    ...(currentStepUrl && { currentStepUrl: currentStepUrl }),   
+                    ...(refinedProjectDescription && { refinedProjectDescription: refinedProjectDescription }),                       
+                    ...(narrativeConceptSuggestions && { narrativeConceptSuggestions: narrativeConceptSuggestions }),   
+                    ...(narrativeConcept && { narrativeConcept: narrativeConcept }),   
+                },
             }) as Story;
 
-     
-            res.status(200).json({ data: { newStory, user }, error: false, message: "success" });
+            if(selectedTargetAudience) await this.addSelectedTargetAudience(selectedTargetAudience, updatedStory.id);
+            if(selectedGenres) await this.addSelectedGenres(selectedGenres, updatedStory.id);
+
+            const story = await this.fetchStoryById(id)
+
+            res.status(200).json({ story, user , error: false, message: "success" });
 
         } catch (error) {
             this.errorService.handleErrorResponse(error)(res);            
         }
     }
 
+    public updateSynopsisList = async (
+        req: CustomRequest,
+        res: Response
+    ): Promise<void> => {
+        try {
+            const { id } = req.params                                        
+            const { synopsis } = req.body;
+
+            const user: IJwtPayload = req.user as IJwtPayload;
+
+            const existingStory = await this.fetchStoryById(id);
+            const existingSynopses = existingStory?.synopsisList;
+
+            let synopsisListArray: SynopsisInterface[] = existingSynopses.map((item: SynopsisInterface) => {
+                if (item.id === synopsis.id) {
+                    return {...item, active: true}
+                }
+
+                return {...item, active: false}
+            });
+            
+            await this.storyRepo.update({ 
+                where: { 
+                    id: id,
+                    userId: user?.id,   
+                },
+                data: {
+                    ...(synopsis?.content && { synopsis: synopsis?.content }),
+                    ...(synopsisListArray && { synopsisList: synopsisListArray }),
+                    ...(synopsis?.tone && { tone: synopsis?.tone }),
+                    ...(synopsis?.contentType && { contentType: synopsis?.contentType }),                    
+                    ...(synopsis?.narrativeConcept && { narrativeConcept: synopsis?.narrativeConcept }),          
+                    // ...(projectDescription && { projectDescription: projectDescription }),
+                },
+            }) as Story;
+
+            let genreIds = synopsis?.genres?.map((item: any) => item?.storyGenre?.id);
+            let storyAudienceIds = synopsis?.storyAudiences?.map((item: any) => item?.targetAudience?.id);
+
+            if(storyAudienceIds) await this.addSelectedTargetAudience(storyAudienceIds, id);
+            if(genreIds) await this.addSelectedGenres(genreIds, id);
+
+            const story = await this.fetchStoryById(id);
+
+            res.status(200).json({ story, error: false, message: "success" });
+
+        } catch (error) {
+            this.errorService.handleErrorResponse(error)(res);                        
+        }
+    }
+
+    public updateSynopsisCharacter = async (
+        req: CustomRequest,
+        res: Response
+    ): Promise<void> => {
+        try {
+            const { id } = req.params                                        
+            const { synopsisId, characterId, name, alias, age, 
+                role, gender, backstory, race, strengths, weaknesses, 
+                internalConflict, externalConflict, voice, perspective, 
+                relationshipToOtherCharacters, relationshipToProtagonists  
+            } = req.body;
+
+            const user: IJwtPayload = req.user as IJwtPayload;
+
+            const existingStory = await this.fetchStoryById(id);
+            if (!existingStory) throw new Error("Story not found");
+
+            const existingSynopses = existingStory?.synopsisList; // GET ALL SYNOPSIS IN A STORY
+            const synopsis = existingSynopses.find((item: any) => item.id === synopsisId ); // FIND THE SPECIFIC SYNOPSIS
+            if (!synopsis) throw new Error("Synopsis not found");
+
+            const character = synopsis?.characters.find((item: any) => item.id === characterId ); // FIND THE SPECIFIC CHARACTER
+            if (!character) throw new Error("Character not found");
+
+            let updatedCharacter = {
+                id: characterId,
+                name: name ?? character.name,
+                alias: alias ?? character.alias,
+                age: age ?? character.age,
+                role: role ?? character.role,
+                gender: gender ?? character.gender,
+                backstory: backstory ?? character.backstory,
+                race: race ?? character.race,
+                strengths: strengths ?? character.strengths,
+                weaknesses: weaknesses ?? character.weaknesses,
+                internalConflict: internalConflict ?? character.internalConflict,
+                externalConflict: externalConflict ?? character.externalConflict,
+                voice: voice ?? character.voice,
+                perspective: perspective ?? character.perspective,
+                relationshipToOtherCharacters: relationshipToOtherCharacters ?? character.relationshipToOtherCharacters,
+                relationshipToProtagonists: relationshipToProtagonists ?? character.relationshipToProtagonists,
+            }
+
+            // GET THE CHARACTER TO BE UPDATED BY ID AND SET THE NEW DATA
+            let newSynopsisCharacterUpdate = synopsis?.characters.map((item: any) => {
+                if (item.id === characterId) {
+                    return updatedCharacter;
+                }
+                return item;
+            });
+
+            synopsis.characters = newSynopsisCharacterUpdate; // RESET ALL CHARACTERS IN THE SYNOPSIS
+
+            // UPDATE THE SYNOPSIS AND RESET THE SYNOPSIS LIST
+            let newSynopsisListUpdate = existingStory?.synopsisList.map?.((item: any) => {
+                if (item.id === synopsisId) {
+                    return synopsis;
+                }
+                return item;
+            });            
+
+            // UPDATE STORY'S SYNOPSIS
+            await this.storyRepo.update({ 
+                where: { 
+                    id: id,
+                    userId: user?.id,   
+                },
+                data: {
+                    ...(newSynopsisListUpdate && { synopsisList: newSynopsisListUpdate }),
+                },
+            }) as Story;
+
+            res.status(200).json({ newSynopsisListUpdate, synopsis, error: false, message: "success" });
+
+        } catch (error) {
+            this.errorService.handleErrorResponse(error)(res);                                    
+        }
+    }
+
+    public updateSynopsisCharacterRelationship = async (
+        req: CustomRequest,
+        res: Response
+    ): Promise<void> => {
+        const { id } = req.params                                        
+        const { synopsisId, characterId, relationshipToOtherCharacters } = req.body;
+        try {
+            const user: IJwtPayload = req.user as IJwtPayload;
+            
+            const existingStory = await this.fetchStoryById(id);
+
+            if (!existingStory) throw new Error("Story not found");
+
+            const existingSynopses = existingStory?.synopsisList; // GET ALL SYNOPSIS IN A STORY
+            const synopsis = existingSynopses.find((item: any) => item.id === synopsisId ); // FIND THE SPECIFIC SYNOPSIS
+            if (!synopsis) throw new Error("Synopsis not found");
+
+            const character = synopsis?.characters.find((item: any) => item.id === characterId ); // FIND THE SPECIFIC CHARACTER
+            if (!character) throw new Error("Character not found");
+
+            res.status(200).json({ character, error: false, message: "success" });
+
+        } catch (error) {
+            console.error(error);            
+            this.errorService.handleErrorResponse(error)(res);                        
+        }
+    }
 
     public getStory = async (req: CustomRequest, res: Response): Promise<void> => {
         try {
@@ -265,11 +468,18 @@ export class StoryServiceV2 implements IStoryService {
                             scenes: true  // This correctly includes scenes for each chapter
                         }
                     },
-                    storyAudiences: true,
-                    storyGenres: true
+                    storyAudiences: {
+                        select: {
+                            targetAudience: true
+                        }
+                    },
+                    storyGenres: {
+                        select: {
+                            storyGenre: true
+                        }
+                    },
                 }
-            });
-        
+            });        
             if (!story) throw new Error("Story not found");
 
             const paidStoryTransaction = await this.transactionRepo.count({
@@ -422,7 +632,6 @@ export class StoryServiceV2 implements IStoryService {
 
     private addSelectedGenres = async (selectedGenres: number[], storyId: string) => {
         const genreList = selectedGenres;
-        console.log(selectedGenres);
         
         await this.genresOnStoriesRepo.deleteMany({
             where: {
@@ -455,7 +664,6 @@ export class StoryServiceV2 implements IStoryService {
     }
 
     private addSelectedTargetAudience = async (selectedTargetAudiences: string[], storyId: string) => {
-        console.log(selectedTargetAudiences);
 
         await this.audienceOnStoriesRepo.deleteMany({
             where: {
@@ -510,6 +718,41 @@ export class StoryServiceV2 implements IStoryService {
             counter++;
         }
         return freshSlug; 
+    }
+
+    private fetchStoryById = async (storyId: string) => {
+        try {
+            const story: any = await this.storyRepo.get({
+                where: {
+                    id: storyId,
+                },
+                include: {
+                    characters: true,
+                    plotSuggestions: true,
+                    storyStructure: true,
+                    user: true,
+                    assetTransactions: true,
+                    chapters: {
+                        include: {
+                            scenes: true  // This correctly includes scenes for each chapter
+                        }
+                    },
+                    storyAudiences: {
+                        select: {
+                            targetAudience: true
+                        }
+                    },
+                    storyGenres: {
+                        select: {
+                            storyGenre: true
+                        }
+                    },
+                }
+            });
+            return story;
+        } catch (error) {
+            return false;   
+        }
     }
 
     
