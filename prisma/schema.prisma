@@ -197,87 +197,85 @@ model Story {
   
   thematicElements              Json?
   thematicOptions               Json?
-  suspenseTechnique             Json?
-  suspenseTechniqueDescription  String?
   setting                       String?
 
   // INTRODUCTION 
   introductionLocked            Boolean? @default(false)
-  genre                         String?
+  // genre                         String?
   genres                        Json?
-  introductionTone              Json?
-  introductionSetting           Json?
-  introductionCharacters        Json?
-  protagonistSuggestions        Json?
-  suggestedCharacters           Json?
-  introductionImage             String?
+  // introductionTone              Json?
+  // introductionSetting           Json?
+  // introductionCharacters        Json?
+  // protagonistSuggestions        Json?
+  // suggestedCharacters           Json?
+  // introductionImage             String?
 
 
-  // INCITING INCIDENT
-  incitingIncidentLocked        Boolean? @default(false)
-  typeOfEvent String?                
-  causeOfTheEvent String?
-  stakesAndConsequences String?
-  incitingIncidentTone  Json?
-  incitingIncidentCharacters  Json?
-  incitingIncidentSetting Json?
-  incitingIncidentExtraDetails String?
-  incitingIncidentImage              String?
+  // // INCITING INCIDENT
+  // incitingIncidentLocked        Boolean? @default(false)
+  // typeOfEvent String?                
+  // causeOfTheEvent String?
+  // stakesAndConsequences String?
+  // incitingIncidentTone  Json?
+  // incitingIncidentCharacters  Json?
+  // incitingIncidentSetting Json?
+  // incitingIncidentExtraDetails String?
+  // incitingIncidentImage              String?
 
-  // FIRST PLOT POINT
-  firstPlotPointLocked  Boolean? @default(false) 
-  protagonistGoal String?                
-  protagonistTriggerToAction String?                
-  obstaclesProtagonistWillFace String?                
-  firstPlotPointCharacters  Json?
-  firstPlotPointSetting  Json?
-  firstPlotPointTone  Json?
-  firstPlotPointImage String?
+  // // FIRST PLOT POINT
+  // firstPlotPointLocked  Boolean? @default(false) 
+  // protagonistGoal String?                
+  // protagonistTriggerToAction String?                
+  // obstaclesProtagonistWillFace String?                
+  // firstPlotPointCharacters  Json?
+  // firstPlotPointSetting  Json?
+  // firstPlotPointTone  Json?
+  // firstPlotPointImage String?
 
-  // RISING ACTION & MIDPOINT
-  challengesProtagonistFaces   String?                     
-  protagonistPerspectiveChange   String?                     
-  majorEventPropellingClimax   String?                     
-  risingActionAndMidpointCharacters  Json?                                                   
-  risingActionAndMidpointSetting   Json?                    
-  risingActionAndMidpointTone  Json?
-  risingActionAndMidpointExtraDetails  String?
-  risingActionAndMidpointLocked Boolean? @default(false)
-  risingActionAndMidpointImage  String?
+  // // RISING ACTION & MIDPOINT
+  // challengesProtagonistFaces   String?                     
+  // protagonistPerspectiveChange   String?                     
+  // majorEventPropellingClimax   String?                     
+  // risingActionAndMidpointCharacters  Json?                                                   
+  // risingActionAndMidpointSetting   Json?                    
+  // risingActionAndMidpointTone  Json?
+  // risingActionAndMidpointExtraDetails  String?
+  // risingActionAndMidpointLocked Boolean? @default(false)
+  // risingActionAndMidpointImage  String?
 
 
-  // PINCH POINT & SECOND PLOT POINT
-  newObstacles   String?                     
-  discoveryChanges   String?                     
-  howStakesEscalate   String?                     
-  pinchPointsAndSecondPlotPointCharacters  Json?                                                   
-  pinchPointsAndSecondPlotPointSetting   Json?                    
-  pinchPointsAndSecondPlotPointTone  Json?
-  pinchPointsAndSecondPlotPointExtraDetails  String?
-  pinchPointsAndSecondPlotPointLocked Boolean? @default(false)
-  pinchPointsAndSecondPlotPointImage  String?
+  // // PINCH POINT & SECOND PLOT POINT
+  // newObstacles   String?                     
+  // discoveryChanges   String?                     
+  // howStakesEscalate   String?                     
+  // pinchPointsAndSecondPlotPointCharacters  Json?                                                   
+  // pinchPointsAndSecondPlotPointSetting   Json?                    
+  // pinchPointsAndSecondPlotPointTone  Json?
+  // pinchPointsAndSecondPlotPointExtraDetails  String?
+  // pinchPointsAndSecondPlotPointLocked Boolean? @default(false)
+  // pinchPointsAndSecondPlotPointImage  String?
 
-  // CLIMAX AND FALLING ACTION
-  finalChallenge  String?
-  challengeOutcome String?
-  storyResolution String?
-  climaxAndFallingActionSetting  Json?
-  climaxAndFallingActionTone Json?
-  climaxAndFallingActionCharacters Json?
-  climaxAndFallingActionExtraDetails Json?
-  climaxAndFallingActionLocked Boolean? @default(false)
-  climaxAndFallingActionImage String?
+  // // CLIMAX AND FALLING ACTION
+  // finalChallenge  String?
+  // challengeOutcome String?
+  // storyResolution String?
+  // climaxAndFallingActionSetting  Json?
+  // climaxAndFallingActionTone Json?
+  // climaxAndFallingActionCharacters Json?
+  // climaxAndFallingActionExtraDetails Json?
+  // climaxAndFallingActionLocked Boolean? @default(false)
+  // climaxAndFallingActionImage String?
 
-  // RESOLUTION
-  climaxConsequences String?
-  howCharactersEvolve String?
-  resolutionOfConflict  String?
-  resolutionCharacters Json?
-  resolutionSetting  Json?
-  resolutionTone Json?
-  resolutionExtraDetails Json?
-  resolutionLocked Boolean? @default(false)
-  resolutionImage String?
+  // // RESOLUTION
+  // climaxConsequences String?
+  // howCharactersEvolve String?
+  // resolutionOfConflict  String?
+  // resolutionCharacters Json?
+  // resolutionSetting  Json?
+  // resolutionTone Json?
+  // resolutionExtraDetails Json?
+  // resolutionLocked Boolean? @default(false)
+  // resolutionImage String?
 
   paidAt                        DateTime?
   isPaid                        Boolean? @default(false)
@@ -292,13 +290,13 @@ model Story {
   publishedAt                   DateTime? 
   updatedAt DateTime @updatedAt
 
-  pages                 Page[]
+  // pages                 Page[]
   scenes                Scene[]
   characters            Character[]
-  plotSuggestions       PlotSuggestion[]
+  // plotSuggestions       PlotSuggestion[]
   transactions       Transaction[]
 
-  storyStructure StoryStructure?
+  // storyStructure StoryStructure?
   // image Image?
   storyAccesses StoryAccess[]
   // storyAccesses StoryAccess[] @relation("StoryToAccess", onDelete: Cascade)
@@ -374,100 +372,100 @@ model Chapter {
   createdAt     DateTime @default(now())
 
 }
-model StoryStructure {
-  id                            String  @id @default(cuid())
-  storyId                       String  @unique
+// model StoryStructure {
+//   id                            String  @id @default(cuid())
+//   storyId                       String  @unique
   
-  // protagonistGoal                 Json?
-  // protagonistGoalSuggestions      Json?
+//   // protagonistGoal                 Json?
+//   // protagonistGoalSuggestions      Json?
 
-  // whoDoesNotHaveProtagonistGoal             String?
-  // whoDoesNotHaveProtagonistGoalSuggestions  Json?
+//   // whoDoesNotHaveProtagonistGoal             String?
+//   // whoDoesNotHaveProtagonistGoalSuggestions  Json?
   
-  // protagonists                  Json?
-  // protagonistSuggestions        Json?
+//   // protagonists                  Json?
+//   // protagonistSuggestions        Json?
 
-  // protagonistGoalObstacle             Json?
-  // protagonistGoalObstacleSuggestions  Json?
+//   // protagonistGoalObstacle             Json?
+//   // protagonistGoalObstacleSuggestions  Json?
 
-  // protagonistWeaknessStrengthSuggestions  Json?
+//   // protagonistWeaknessStrengthSuggestions  Json?
 
-  // protagonistGoalMotivationSuggestions    Json?
+//   // protagonistGoalMotivationSuggestions    Json?
 
-  // settingSuggestions              Json?
-  // introductionSetting            Json?
+//   // settingSuggestions              Json?
+//   // introductionSetting            Json?
 
-  // introductionStakes            Json?
-  // introductionStakesSuggestions Json?
-
-
-  // STORY GENERATION ELEMENTS START
-  introduceProtagonistAndOrdinaryWorld String?
-  incitingIncident            String?
-  firstPlotPoint  String?
-  risingActionAndMidpoint String?
-  pinchPointsAndSecondPlotPoint String?
-  climaxAndFallingAction  String?
-  resolution  String?
-  // STORY GENERATION ELEMENTS END
-
-  introductionSummary String?
-  incitingIncidentSummary            String?
-  firstPlotPointSummary  String?
-  risingActionAndMidpointSummary String?
-  pinchPointsAndSecondPlotPointSummary String?
-  climaxAndFallingActionSummary  String?
-  resolutionSummary  String?
-
-  antagonists                  Json?
-  antagonistSuggestions        Json?
-
-  // antagonisticForce             Json?
-
-  // exposition                    Json?
-  // expositionSuggestions         Json?
-  // expositionCharacters          Json?
-  // expositionSummary             String?
-
-  // hook                          Json?
-  // hookSuggestions               Json?
-  // hookCharacters                Json?
-  // hookSummary                   String?
-
-  // incitingEvent                 Json?
-  // incitingEventSuggestions      Json?
-  // incitingEventCharacters       Json?
-  // incitingEventSummary          String?
-
-  // protagonistOrdinaryWorld      Json?
-  // protagonistOrdinaryWorldSuggestions Json?
-  // protagonistOrdinaryWorldSummary Json?
-
-  story   Story @relation(fields: [storyId], references: [id], onDelete: Cascade)
-}
-
-model PlotSuggestion {
-  id          String   @id @default(cuid())
-  storyId     String
-  title       String?
-  slug        String?
-  plot        String?
-  story       Story @relation(fields: [storyId], references: [id], onDelete: Cascade)
-}
+//   // introductionStakes            Json?
+//   // introductionStakesSuggestions Json?
 
 
-model Page {
-  id            String   @id @default(cuid())
-  storyId       String
-  imageUrl      String?
-  content       String
-  number        Int
-  createdAt     DateTime @default(now())
+//   // STORY GENERATION ELEMENTS START
+//   introduceProtagonistAndOrdinaryWorld String?
+//   incitingIncident            String?
+//   firstPlotPoint  String?
+//   risingActionAndMidpoint String?
+//   pinchPointsAndSecondPlotPoint String?
+//   climaxAndFallingAction  String?
+//   resolution  String?
+//   // STORY GENERATION ELEMENTS END
 
-  // image Image?
+//   introductionSummary String?
+//   incitingIncidentSummary            String?
+//   firstPlotPointSummary  String?
+//   risingActionAndMidpointSummary String?
+//   pinchPointsAndSecondPlotPointSummary String?
+//   climaxAndFallingActionSummary  String?
+//   resolutionSummary  String?
 
-  story         Story @relation(fields: [storyId], references: [id], onDelete: Cascade)
-}
+//   antagonists                  Json?
+//   antagonistSuggestions        Json?
+
+//   // antagonisticForce             Json?
+
+//   // exposition                    Json?
+//   // expositionSuggestions         Json?
+//   // expositionCharacters          Json?
+//   // expositionSummary             String?
+
+//   // hook                          Json?
+//   // hookSuggestions               Json?
+//   // hookCharacters                Json?
+//   // hookSummary                   String?
+
+//   // incitingEvent                 Json?
+//   // incitingEventSuggestions      Json?
+//   // incitingEventCharacters       Json?
+//   // incitingEventSummary          String?
+
+//   // protagonistOrdinaryWorld      Json?
+//   // protagonistOrdinaryWorldSuggestions Json?
+//   // protagonistOrdinaryWorldSummary Json?
+
+//   story   Story @relation(fields: [storyId], references: [id], onDelete: Cascade)
+// }
+
+// model PlotSuggestion {
+//   id          String   @id @default(cuid())
+//   storyId     String
+//   title       String?
+//   slug        String?
+//   plot        String?
+//   story       Story @relation(fields: [storyId], references: [id], onDelete: Cascade)
+// }
+
+
+// model Page {
+//   id            String   @id @default(cuid())
+//   storyId       String
+//   imageUrl      String?
+//   content       String
+//   number        Int
+//   createdAt     DateTime @default(now())
+
+//   // image Image?
+
+//   story         Story @relation(fields: [storyId], references: [id], onDelete: Cascade)
+// }
 
 model Image {
   id                String   @id @default(cuid())
