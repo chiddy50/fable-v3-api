@@ -178,7 +178,7 @@ export class UserService implements IUserService {
 				include: {
 					stories: {
 						include: {  // Use another 'include' here instead of direct properties
-							storyStructure: true,
+							// storyStructure: true,
 							storyGenres: true,
 							chapters: {
 								include: {
