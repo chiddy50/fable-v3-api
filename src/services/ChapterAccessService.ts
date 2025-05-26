@@ -35,7 +35,7 @@ export class ChapterAccessService implements IChapterAccessService {
                 },
                 include: {
                     user: true,
-                    storyStructure: true
+                    // storyStructure: true
                 }
             });
             if (!story) throw new Error("Story not found");
@@ -293,13 +293,13 @@ export class ChapterAccessService implements IChapterAccessService {
                         email: true
                     }
                 },
-                storyStructure: {
-                    select: { 
-                        id: true, 
-                        introduceProtagonistAndOrdinaryWorld: true,
-                        incitingIncident: true
-                    },
-                },
+                // storyStructure: {
+                //     select: { 
+                //         id: true, 
+                //         introduceProtagonistAndOrdinaryWorld: true,
+                //         incitingIncident: true
+                //     },
+                // },
             }
         });
         return story;
@@ -331,18 +331,18 @@ export class ChapterAccessService implements IChapterAccessService {
                         email: true
                     }
                 },
-                storyStructure: {
-                    select: { 
-                        id: true, 
-                        introduceProtagonistAndOrdinaryWorld: true, 
-                        incitingIncident: true,            
-                        firstPlotPoint: true,  
-                        risingActionAndMidpoint: true, 
-                        pinchPointsAndSecondPlotPoint: true, 
-                        climaxAndFallingAction: true,  
-                        resolution: true,  
-                    },
-                },
+                // storyStructure: {
+                //     select: { 
+                //         id: true, 
+                //         introduceProtagonistAndOrdinaryWorld: true, 
+                //         incitingIncident: true,            
+                //         firstPlotPoint: true,  
+                //         risingActionAndMidpoint: true, 
+                //         pinchPointsAndSecondPlotPoint: true, 
+                //         climaxAndFallingAction: true,  
+                //         resolution: true,  
+                //     },
+                // },
             }
         });
         return story;

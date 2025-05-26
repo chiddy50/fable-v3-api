@@ -459,8 +459,8 @@ export class StoryServiceV2 implements IStoryService {
                 },
                 include: {
                     characters: true,
-                    plotSuggestions: true,
-                    storyStructure: true,
+                    // plotSuggestions: true,
+                    // storyStructure: true,
                     user: true,
                     assetTransactions: true,
                     chapters: {
@@ -728,8 +728,8 @@ export class StoryServiceV2 implements IStoryService {
                 },
                 include: {
                     characters: true,
-                    plotSuggestions: true,
-                    storyStructure: true,
+                    // plotSuggestions: true,
+                    // storyStructure: true,
                     user: true,
                     assetTransactions: true,
                     chapters: {

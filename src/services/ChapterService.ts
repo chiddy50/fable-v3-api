@@ -126,7 +126,12 @@ export class ChapterService implements IChapterService {
             // Get updated story with all includes
             const updatedStory: any = await this.storyRepo.get({
                 where: { id: id, userId: user?.id },
-                include: { plotSuggestions: true, characters: true, storyStructure: true, chapters: true }
+                include: { 
+                    // plotSuggestions: true, 
+                    characters: true, 
+                    // storyStructure: true, 
+                    chapters: true 
+                }
             });
 
             res.status(200).json({ 

@@ -674,7 +674,11 @@ export class StoryService implements IStoryService {
 
             const updatedStory: any = await this.storyRepo.get({
                 where: { id: id, userId: user?.id },
-                include: { plotSuggestions: true, characters: true, storyStructure: true }
+                include: { 
+                    // plotSuggestions: true, 
+                    characters: true, 
+                    // storyStructure: true 
+                }
             });
 
             res.status(200).json({
@@ -753,8 +757,8 @@ export class StoryService implements IStoryService {
                 },
                 include: {
                     characters: true,
-                    plotSuggestions: true,
-                    storyStructure: true,
+                    // plotSuggestions: true,
+                    // storyStructure: true,
                 },
             }) as Story;
 
@@ -998,7 +1002,7 @@ export class StoryService implements IStoryService {
                     },
                     characters: true,
                     scenes: true,
-                    pages: true,
+                    // pages: true,
                 },
             });
 
@@ -1029,7 +1033,7 @@ export class StoryService implements IStoryService {
                 include: {
                     characters: true,
                     scenes: true,
-                    pages: true,
+                    // pages: true,
                 },
                 orderBy: { createdAt: 'desc' },
                 // skip: Number(offset),
@@ -1073,7 +1077,7 @@ export class StoryService implements IStoryService {
                 where: filterOptions,
                 include: {
                     characters: true,
-                    plotSuggestions: true
+                    // plotSuggestions: true
                 },
                 orderBy: { createdAt: 'desc' },
                 // skip: Number(offset),
@@ -1116,7 +1120,7 @@ export class StoryService implements IStoryService {
                 where: filterOptions,
                 include: {
                     characters: true,
-                    plotSuggestions: true,
+                    // plotSuggestions: true,
                     chapters: {
                         where: {
                             readersHasAccess: true
@@ -1171,8 +1175,8 @@ export class StoryService implements IStoryService {
                 },
                 include: {
                     characters: true,
-                    plotSuggestions: true,
-                    storyStructure: true,
+                    // plotSuggestions: true,
+                    // storyStructure: true,
                     user: true,
                     assetTransactions: true,
                     chapters: {
@@ -1236,9 +1240,9 @@ export class StoryService implements IStoryService {
                                 email: true
                             }
                         },
-                        storyStructure: {
-                            select: { id: true, introduceProtagonistAndOrdinaryWorld: true },
-                        },
+                        // storyStructure: {
+                        //     select: { id: true, introduceProtagonistAndOrdinaryWorld: true },
+                        // },
                     }
                 });
 
@@ -1252,7 +1256,7 @@ export class StoryService implements IStoryService {
                         id: id
                     },
                     include: {
-                        storyStructure: true,
+                        // storyStructure: true,
                         user: true
                     }
                 });
@@ -1265,9 +1269,9 @@ export class StoryService implements IStoryService {
                         id: id
                     },
                     include: {
-                        storyStructure: {
-                            select: { id: true, introduceProtagonistAndOrdinaryWorld: true },
-                        },
+                        // storyStructure: {
+                        //     select: { id: true, introduceProtagonistAndOrdinaryWorld: true },
+                        // },
                         user: true
                     }
                 });

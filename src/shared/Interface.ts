@@ -41,7 +41,7 @@ export interface Story {
   publicId?: string | null;  // Optional unique string
   metaData?: any | null;  // Optional JSON field
   createdAt: Date;
-  plotSuggestions: any
+  // plotSuggestions: any
 }
 
 export interface Page {
