@@ -42,6 +42,27 @@ StoryControllerV2.put(
 );
 
 
+StoryControllerV2.put(
+    "/:id/synopsis-list", 
+    middlewareServiceFactory.verifyToken,
+    storyServiceFactoryV2.updateSynopsisList
+);
+
+StoryControllerV2.put(
+    "/:id/synopsis-character", 
+    middlewareServiceFactory.verifyToken,
+    storyServiceFactoryV2.updateSynopsisCharacter
+);
+
+
+StoryControllerV2.put(
+    "/:id/synopsis-character-relationship", 
+    middlewareServiceFactory.verifyToken,
+    storyServiceFactoryV2.updateSynopsisCharacterRelationship
+);
+
+
+
 
 StoryControllerV2.get(
     "/:id", 
