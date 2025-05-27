@@ -1053,7 +1053,6 @@ export class StoryService implements IStoryService {
                 message: "Stories successfully retrieved"
             });
 
-
         } catch (error) {
             this.errorService.handleErrorResponse(error)(res);
         }
