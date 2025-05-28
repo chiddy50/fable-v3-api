@@ -2,6 +2,7 @@ export interface IBase {
   create(data: object): Promise<object>;
   createMany(data: object): Promise<object>;  
   update(data: object): Promise<object>;
+  updateMany(data: object): Promise<object>;  
   delete(filter: object): Promise<object>;
   deleteMany(filter: object): Promise<object>;  
   getUnique(filter: object): Promise<object>;
@@ -10,6 +11,7 @@ export interface IBase {
   aggregate(filter: object): Promise<Array<object>>;
   count(filter: object): Promise<number>;
   upsert(data: object): Promise<object>;
+  transaction(transactions: any): Promise<any>;
 }
 
 export class Base implements IBase {
@@ -32,6 +34,12 @@ export class Base implements IBase {
   public update = async (data: object): Promise<object> => {
     return await this.db[this.modelName].update(data);
   };
+
+  public updateMany = async (data: object): Promise<object> => {
+    return await this.db[this.modelName].updateMany(data);
+  };
+
+  
 
   public delete = async (filter: object): Promise<object> => {
     return await this.db[this.modelName].delete(filter);

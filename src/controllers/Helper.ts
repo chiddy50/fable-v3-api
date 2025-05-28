@@ -15,6 +15,7 @@ HelperController.post("/delete-user", helperServiceFactory.deleteUser);
 HelperController.get("/get-users", helperServiceFactory.getUsers);
 HelperController.put("/update-chapter/:id", helperServiceFactory.updateChapter);
 
+HelperController.post("/delete-story", helperServiceFactory.deleteStory);
 
 
 export default HelperController;

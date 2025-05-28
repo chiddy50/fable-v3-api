@@ -33,4 +33,5 @@ interface CharacterParserInterface {
     strengths: string;
     voice: string;
     perspective: string;
+    uniqueHook: string;
 }

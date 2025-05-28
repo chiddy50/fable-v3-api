@@ -145,6 +145,7 @@ model AuthToken {
 model Story {
   id                            String   @id @default(cuid())
   userId                        String
+  synopsisId                    String?
   projectTitle                  String?
   projectDescription            String? @db.Text
   title                         String?
@@ -200,7 +201,7 @@ model Story {
   setting                       String?
 
   // INTRODUCTION 
-  introductionLocked            Boolean? @default(false)
+  // introductionLocked            Boolean? @default(false)
   // genre                         String?
   genres                        Json?
   // introductionTone              Json?
@@ -310,6 +311,7 @@ model Story {
   bookmarks  Bookmark[]  // Add this line
   // characterChats    UserCharacterChat[]
   chapterAccess   ChapterAccess[]
+  synopses    Synopsis[]
 
   user User @relation(fields: [userId], references: [id], onDelete: Cascade)
 
@@ -331,6 +333,8 @@ model Story {
   // Composite indices for filtered searches
   @@index([type, status, publishedAt])       // Status-based filtering
   @@index([price, publishedAt])              // Price-based queries
+
+  @@index([synopsisId])             
 
   // // Unique constraint for business logic
   // @@unique([projectTitle, status, isFree], name: "unique_project_status")
@@ -372,6 +376,33 @@ model Chapter {
   createdAt     DateTime @default(now())
 
 }
+
+
+model Synopsis {
+  id          String   @id @default(cuid())
+  index       Int
+  storyId     String
+  title       String?
+  content        String?
+  active        Boolean?
+  storyStructure        String?
+  reason        String?
+  narrativeConcept        Json?
+  genres                   Json?
+  storyAudiences           Json?
+  tone           Json?
+  contentType           Json?
+  projectDescription        String?
+  publicId                  String?
+
+  characters            Character[]
+  story       Story @relation(fields: [storyId], references: [id], onDelete: Cascade)
+  updatedAt DateTime @updatedAt
+  createdAt     DateTime @default(now())
+  @@index([index])             
+  @@index([active])             
+}
+
 // model StoryStructure {
 //   id                            String  @id @default(cuid())
 //   storyId                       String  @unique
@@ -526,6 +557,7 @@ model Scene {
 model Character {
   id                                String   @id @default(cuid())
   storyId                                 String
+  synopsisId                              String?
   name                                    String
   alias                                   String?
 
@@ -533,7 +565,6 @@ model Character {
   externalConflict                        String?
   voice                                   String?
   perspective                             String?
-
 
   // Goal-related fields
   whatTheyWant                            Json?
@@ -581,6 +612,7 @@ model Character {
   facialHair                              String?
   extraDescription                        String?  
   age                                     String?
+  race                                    String?
   skinTone                                String?
   hair                                    String?
   facialFeatures                          String?
@@ -610,6 +642,11 @@ model Character {
   description                             String?
   summary                                 String?
   metaData                                Json?
+
+  relationshipToOtherCharacters           Json?
+  relationshipToProtagonists              String?
+  uniqueHook                              String?
+  
   createdAt                         DateTime @default(now())
   updatedAt DateTime @updatedAt
 
@@ -621,6 +658,7 @@ model Character {
   assets CharacterAsset[]
 
   story Story @relation(fields: [storyId], references: [id], onDelete: Cascade)
+  synopsis Synopsis? @relation(fields: [synopsisId], references: [id], onDelete: Cascade)
 }
 
 model Transaction {
