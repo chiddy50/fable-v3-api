@@ -56,9 +56,9 @@ StoryControllerV2.put(
 
 
 StoryControllerV2.put(
-    "/:id/synopsis-character-relationship", 
+    "/:id/all-synopsis", 
     middlewareServiceFactory.verifyToken,
-    storyServiceFactoryV2.updateSynopsisCharacterRelationship
+    storyServiceFactoryV2.updateAllSynopsis
 );
 
 

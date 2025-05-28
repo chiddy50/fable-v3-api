@@ -158,7 +158,6 @@ export class ChapterService implements IChapterService {
             genres,
             introduceProtagonistAndOrdinaryWorld,
             introductionSummary,
-            introductionLocked,
             introductionSetting,
             introductionTone,
             protagonistSuggestions,
@@ -176,7 +175,6 @@ export class ChapterService implements IChapterService {
 
         // Prepare story update data
         const storyUpdateData = {
-            ...(introductionLocked && { introductionLocked }),
             ...(introductionSetting && { introductionSetting }),
             ...(introductionTone && { introductionTone }),
             ...(protagonistSuggestions && { protagonistSuggestions }),

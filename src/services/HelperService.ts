@@ -20,6 +20,7 @@ export class HelperService implements IHelperService {
         private errorService: IErrorService,
         private targetAudienceRepo: IBase,
         private chapterRepo: IBase,
+        private audienceOnStoriesRepo: IBase,
     ) { }
 
     public getGenres = async (
@@ -132,6 +133,40 @@ export class HelperService implements IHelperService {
 
             res.status(200).json({
                 user,
+                error: false,
+                message: "success"
+            });
+
+        } catch (error) {
+            this.errorService.handleErrorResponse(error)(res);
+        }
+    }
+
+    public deleteStory = async (
+        req: Request,
+        res: Response
+    ): Promise<void> => {
+        try {
+            const { storyId, } = req.body;
+
+            await this.audienceOnStoriesRepo.deleteMany({
+                where: {
+                    storyId: storyId,                
+                },
+            });
+
+            await this.genresOnStoriesRepo.deleteMany({
+                where: {
+                    storyId: storyId,
+                },
+            });
+
+            const storyDeleted = await this.storyRepo.delete({
+                where: { id: storyId }
+            });
+
+            res.status(200).json({
+                storyDeleted,
                 error: false,
                 message: "success"
             });

@@ -9,7 +9,8 @@ import {
   userRepository,
   storyAccessRepository,
   targetAudienceRepository,
-  chapterRepository
+  chapterRepository,
+  audienceOnStoriesRepository
 } from "./RepositoryFactory";
 
 
@@ -23,7 +24,8 @@ export const helperServiceFactory = new HelperService(
   storyGenreRepository,
   errorService,
   targetAudienceRepository,
-  chapterRepository
+  chapterRepository,
+  audienceOnStoriesRepository,
 );
 
 

@@ -22,6 +22,7 @@ import {
 	targetAudienceRepository,
 	audienceOnStoriesRepository,
 	chapterRepository,
+	synopsisRepository,
 
 } from "./RepositoryFactory";
 
@@ -62,6 +63,7 @@ export const storyServiceFactoryV2 = new StoryServiceV2(
 	targetAudienceRepository,
 	audienceOnStoriesRepository,
 	chapterRepository,
+	synopsisRepository,
 	authService,
 	errorService
 );
