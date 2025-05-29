@@ -30,6 +30,7 @@ import { TargetAudienceRepository } from "../repositories/TargetAudienceReposito
 import { AudienceOnStoriesRepository } from "../repositories/AudienceOnStoriesRepository";
 import { StoryCommentRepository } from "../repositories/StoryCommentRepository";
 import { SynopsisRepository } from "../repositories/SynopsisRepository";
+import { SynopsisCharacterRepository } from "../repositories/SynopsisCharacterRepository";
 
 const prisma: any = new PrismaClient();
 
@@ -64,4 +65,5 @@ export const targetAudienceRepository = new TargetAudienceRepository(prisma);
 export const audienceOnStoriesRepository = new AudienceOnStoriesRepository(prisma);
 export const storyCommentRepository = new StoryCommentRepository(prisma);
 export const synopsisRepository = new SynopsisRepository(prisma);
+export const synopsisCharacterRepository = new SynopsisCharacterRepository(prisma);
 
