@@ -11,4 +11,18 @@ SynopsisController.put(
 );
 
 
+SynopsisController.put(
+    "/:id/create-characters", 
+    middlewareServiceFactory.verifyToken,
+    synopsisServiceFactory.createManySynopsisCharacters
+);
+
+SynopsisController.put(
+    "/:id/add-character", 
+    middlewareServiceFactory.verifyToken,
+    synopsisServiceFactory.addSynopsisCharacter
+);
+
+
+
 export default SynopsisController;

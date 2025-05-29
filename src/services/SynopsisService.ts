@@ -22,6 +22,7 @@ export class SynopsisService implements ISynopsisService {
         private storyRepo: IBase,
         private characterRepo: IBase,
         private userRepo: IBase,                
+        private synopsisCharacterRepo: IBase,                                
         private errorService: IErrorService,
         private authService: IAuth,        
     ) {}
@@ -69,8 +70,7 @@ export class SynopsisService implements ISynopsisService {
                 },
             });
             
-            const story = await this.fetchStoryById(storyId);
-            
+            const story = await this.fetchStoryById(storyId);            
             
             res.status(200).json({ 
                 story,
@@ -84,7 +84,65 @@ export class SynopsisService implements ISynopsisService {
         }
     }
 
-     private fetchStoryById = async (storyId: string) => {
+    public createManySynopsisCharacters = async (
+        req: CustomRequest,
+        res: Response
+    ): Promise<void> => {
+        try {
+            const { id } = req.params;
+            const { characters, storyId, synopsisId } = req.body;
+
+            await this.synopsisCharacterRepo.createMany({
+                data: characters,
+                skipDuplicates: true,
+            });
+
+            const story = await this.fetchStoryById(storyId);            
+
+            res.status(200).json({ 
+                story,
+                characters: await this.characterRepo.getAll({ where: { synopsisId } }),
+                error: false, 
+                message: "success" 
+            });
+        } catch (error) {
+            this.errorService.handleErrorResponse(error)(res);                             
+        }
+    }
+
+    public addSynopsisCharacter = async (
+        req: CustomRequest,
+        res: Response
+    ): Promise<void> => {
+        try {
+            const characterId = req.params.id;
+            const { character, storyId, synopsisId } = req.body;
+
+            const { id, ...characterData } = character;
+
+            await this.characterRepo.create({
+                data: characterData
+            });
+
+            await this.synopsisCharacterRepo.delete({ 
+                where: { 
+                    id: characterId
+                } 
+            });
+
+            const story = await this.fetchStoryById(storyId);            
+
+            res.status(200).json({ 
+                story,                
+                error: false, 
+                message: "success" 
+            });
+        } catch (error) {
+            this.errorService.handleErrorResponse(error)(res);                                         
+        }
+    }
+
+    private fetchStoryById = async (storyId: string) => {
         try {
             const story: any = await this.storyRepo.get({
                 where: {
@@ -96,7 +154,8 @@ export class SynopsisService implements ISynopsisService {
                     assetTransactions: true,
                     synopses: {
                         include: {
-                            characters: true  
+                            characters: true,
+                            synopsisCharacters: true  
                         }
                     },
                     chapters: {

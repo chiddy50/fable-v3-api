@@ -495,7 +495,8 @@ export class StoryServiceV2 implements IStoryService {
                     user: true,
                     synopses: {
                         include: {
-                            characters: true  // This correctly includes scenes for each chapter
+                            characters: true,  // This correctly includes scenes for each chapter
+                            synopsisCharacters: true  
                         }
                     },
                     assetTransactions: true,
@@ -800,7 +801,8 @@ export class StoryServiceV2 implements IStoryService {
                     assetTransactions: true,
                     synopses: {
                         include: {
-                            characters: true  
+                            characters: true,
+                            synopsisCharacters: true  
                         }
                     },
                     chapters: {

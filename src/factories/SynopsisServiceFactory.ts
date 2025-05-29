@@ -6,6 +6,7 @@ import {
     characterRepository,
     userRepository,
     synopsisRepository,
+    synopsisCharacterRepository,
 } from "./RepositoryFactory";
 
 export const synopsisServiceFactory = new SynopsisService(
@@ -13,6 +14,7 @@ export const synopsisServiceFactory = new SynopsisService(
     storyRepository,
     characterRepository,
     userRepository,
+    synopsisCharacterRepository,
     errorService,
     authService,
 );

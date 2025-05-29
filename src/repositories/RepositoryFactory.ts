@@ -27,6 +27,7 @@ import { ChapterRepository } from "./ChapterRepository";
 import { AuthTokenRepository } from "./AuthTokenRepository";
 import { TargetAudienceRepository } from "./TargetAudienceRepository";
 import { AudienceOnStoriesRepository } from "./AudienceOnStoriesRepository";
+import { SynopsisCharacterRepository } from "./SynopsisCharacterRepository";
 
 const prisma: any = new PrismaClient();
 
@@ -58,3 +59,4 @@ export const chapterRepository = new ChapterRepository(prisma);
 export const authTokenRepository = new AuthTokenRepository(prisma);
 export const targetAudienceRepository = new TargetAudienceRepository(prisma);
 export const audienceOnStoriesRepository = new AudienceOnStoriesRepository(prisma);
+export const synopsisCharacterRepository = new SynopsisCharacterRepository(prisma);
