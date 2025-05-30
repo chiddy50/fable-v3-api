@@ -142,6 +142,86 @@ export class SynopsisService implements ISynopsisService {
         }
     }
 
+    public updateSynopsisCharacterRelationship = async (
+        req: CustomRequest,
+        res: Response
+    ): Promise<void> => {
+        try {
+            const characterId = req.params.id;
+            const { relationshipToOtherCharacters, storyId, synopsisId } = req.body;
+
+            let response = await this.characterRepo.update({
+                where: {
+                    id: characterId
+                },
+                data: {
+                    relationshipToOtherCharacters
+                }
+            }); 
+
+            res.status(200).json({ 
+                characters: await this.characterRepo.getAll({ where: { synopsisId } }),        
+                error: false, 
+                message: "success" 
+            });
+        } catch (error) {
+            console.error(error);            
+        }
+    }
+
+    public createSynopsisAndDisablePreviousOnes = async (
+        req: CustomRequest,
+        res: Response
+    ): Promise<void> => {
+        try {
+            const { id } = req.params;
+            const { reasonSynopsisChanged, incomingCharacters, synopsisChanged, synopsis, storyId, synopsisId } = req.body;
+
+
+            // DEACTIVATE PREVIOUS SYNOPSIS
+            await this.synopsisRepo.updateMany({ 
+                where: { 
+                    storyId,   
+                },
+                data: {
+                    active: false
+                },
+            }); 
+
+            // CREATE NEW SYNOPSIS VERSION
+
+            const story = await this.fetchStoryById(storyId);            
+
+            let previousSynopsis: any = await this.synopsisRepo.get({
+                where: {
+                    id: synopsisId,
+                    storyId: story.id
+                },
+                include: { characters: true }
+            });
+
+            const newSynopsis = await this.createSynopsis(
+                {
+                    synopsis: synopsis,
+                    synopsisChanged: synopsisChanged,
+                    reasonSynopsisChanged: reasonSynopsisChanged,
+                    incomingCharacters
+                },
+                story,
+                previousSynopsis
+            );
+
+            res.status(200).json({ 
+                story: await this.fetchStoryById(storyId),
+                characters: await this.characterRepo.getAll({ where: { synopsisId } }),        
+                error: false, 
+                message: "success" 
+            });
+        } catch (error) {
+            console.error(error);            
+        }
+    }
+
     private fetchStoryById = async (storyId: string) => {
         try {
             const story: any = await this.storyRepo.get({
@@ -181,4 +261,112 @@ export class SynopsisService implements ISynopsisService {
         }
     }
     
+    private createSynopsis = async (payload: any, story: any, previousSynopsis: any) => {
+        
+        let storySynopsisCount = await this.synopsisRepo.count({
+            storyId: story.id
+        });
+
+        let nextSynopsisIndex = storySynopsisCount + 1;
+        let synopsis: any = await this.synopsisRepo.create({
+            data: {
+                index: nextSynopsisIndex,
+                publicId: uuidv4(),
+                storyId: story?.id,
+                content: payload.synopsis,
+                metaData: payload,
+                active: true,
+                
+                title: story.projectTitle,
+                narrativeConcept: story.narrativeConcept,
+                genres: previousSynopsis?.genres,
+                storyAudiences: previousSynopsis?.storyAudiences,
+                tone: previousSynopsis?.tone,
+                contentType: previousSynopsis?.contentType,
+                storyStructure: previousSynopsis.storyStructure,
+                reason: previousSynopsis.reason,
+                projectDescription: previousSynopsis.projectDescription,
+            }
+        });
+        
+        // create synopsis characters
+        // await this.createSynopsisCharacters(story, previousSynopsis, synopsis.id);
+        await this.createCharacters(story, previousSynopsis, synopsis.id);
+        
+        
+        return synopsis;
+    }
+
+    private createSynopsisCharacters = async (story: any, synopsis: any, synopsisId:string) => {
+        let characters = synopsis.synopsisCharacters;
+        characters.forEach(async (character: any) => {
+
+            await this.synopsisCharacterRepo.create({
+                data: {
+                    storyId: story.id,
+                    synopsisId: synopsisId,
+                    public_id: character.id,
+                    ...(character.name && { name: character.name }),                    
+                    ...(character.alias && { alias: character.alias }),                    
+                    ...(character.gender && { gender: character.gender }),                    
+                    ...(character.age && { age: character.age }),                    
+                    ...(character.role && { role: character.role }),                    
+                    ...(character.race && { race: character.race }),                    
+                    ...(character.backstory && { backstory: character.backstory }),                    
+                    ...(character.internalConflict && { internalConflict: character.internalConflict }),                    
+                    ...(character.externalConflict && { externalConflict: character.externalConflict }),                    
+                    ...(character.relationshipToProtagonists && { relationshipToProtagonists: character.relationshipToProtagonists }),                    
+                    ...(character.relationshipToOtherCharacters && { relationshipToOtherCharacters: character.relationshipToOtherCharacters }),                    
+                    ...(character.weaknesses && { weaknesses: character.weaknesses }),                    
+                    ...(character.strengths && { strengths: character.strengths }),                    
+                    ...(character.voice && { voice: character.voice }),                    
+                    ...(character.perspective && { perspective: character.perspective }),                    
+                    ...(character.uniqueHook && { uniqueHook: character.uniqueHook }),                    
+                    ...(character.roleJustification && { roleJustification: character.roleJustification }),                    
+                }
+            });
+        });
+
+        return true;
+    }
+
+     private createCharacters = async (story: any, synopsis: any, synopsisId:string) => {
+        let characters = synopsis.characters;
+        console.log({
+            characters
+        });
+
+        if (characters?.length < 1) {
+            return
+        }
+        characters?.forEach(async (character: any) => {
+            await this.characterRepo.create({
+                data: {
+                    storyId: story.id,
+                    synopsisId: synopsisId,
+                    public_id: character.id,
+                    ...(character.name && { name: character.name }),                    
+                    ...(character.alias && { alias: character.alias }),                    
+                    ...(character.gender && { gender: character.gender }),                    
+                    ...(character.age && { age: character.age }),                    
+                    ...(character.role && { role: character.role }),                    
+                    ...(character.race && { race: character.race }),                    
+                    ...(character.backstory && { backstory: character.backstory }),                    
+                    ...(character.internalConflict && { internalConflict: character.internalConflict }),                    
+                    ...(character.externalConflict && { externalConflict: character.externalConflict }),                    
+                    ...(character.relationshipToProtagonists && { relationshipToProtagonists: character.relationshipToProtagonists }),                    
+                    ...(character.relationshipToOtherCharacters && { relationshipToOtherCharacters: character.relationshipToOtherCharacters }),                    
+                    ...(character.weaknesses && { weaknesses: character.weaknesses }),                    
+                    ...(character.strengths && { strengths: character.strengths }),                    
+                    ...(character.voice && { voice: character.voice }),                    
+                    ...(character.perspective && { perspective: character.perspective }),                    
+                    ...(character.uniqueHook && { uniqueHook: character.uniqueHook }),                    
+                    ...(character.roleJustification && { roleJustification: character.roleJustification }),                    
+                }
+            });
+        });
+
+        return true;
+    }
+
 }   

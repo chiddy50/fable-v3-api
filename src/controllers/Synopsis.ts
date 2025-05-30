@@ -23,6 +23,21 @@ SynopsisController.put(
     synopsisServiceFactory.addSynopsisCharacter
 );
 
+SynopsisController.put(
+    "/:id/update-character-relationship", 
+    middlewareServiceFactory.verifyToken,
+    synopsisServiceFactory.updateSynopsisCharacterRelationship
+);
+
+SynopsisController.put(
+    "/:id/create-synopsis", 
+    middlewareServiceFactory.verifyToken,
+    synopsisServiceFactory.createSynopsisAndDisablePreviousOnes
+);
+
+
+
+
 
 
 export default SynopsisController;
