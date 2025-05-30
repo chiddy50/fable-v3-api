@@ -318,14 +318,25 @@ export class StoryServiceV2 implements IStoryService {
             const user: IJwtPayload = req.user as IJwtPayload;
 
             const existingStory = await this.fetchStoryById(id);
-            const existingSynopses = existingStory?.synopsisList;
+            const existingSynopses = existingStory?.synopses;
 
-            let synopsisListArray: SynopsisInterface[] = existingSynopses.map((item: SynopsisInterface) => {
-                if (item.id === synopsis.id) {
-                    return {...item, active: true}
-                }
+            // let synopsisListArray: SynopsisInterface[] = existingSynopses.map((item: SynopsisInterface) => {
+            //     if (item.id === synopsis.id) {
+            //         return {...item, active: true}
+            //     }
 
-                return {...item, active: false}
+            //     return {...item, active: false}
+            // });
+
+            await this.deactivateSynopses(existingStory);
+
+            await this.synopsisRepo.update({ 
+                where: { 
+                    id: synopsis?.id,   
+                },
+                data: {
+                    active: true
+                },
             });
             
             await this.storyRepo.update({ 
@@ -335,7 +346,7 @@ export class StoryServiceV2 implements IStoryService {
                 },
                 data: {
                     ...(synopsis?.content && { synopsis: synopsis?.content }),
-                    ...(synopsisListArray && { synopsisList: synopsisListArray }),
+                    // ...(synopsisListArray && { synopsisList: synopsisListArray }),
                     ...(synopsis?.tone && { tone: synopsis?.tone }),
                     ...(synopsis?.contentType && { contentType: synopsis?.contentType }),                    
                     ...(synopsis?.narrativeConcept && { narrativeConcept: synopsis?.narrativeConcept }),          
@@ -375,7 +386,7 @@ export class StoryServiceV2 implements IStoryService {
             const existingStory = await this.fetchStoryById(id);
             if (!existingStory) throw new Error("Story not found");
 
-            const existingSynopses = existingStory?.synopsisList; // GET ALL SYNOPSIS IN A STORY
+            const existingSynopses = existingStory?.synopses; // GET ALL SYNOPSIS IN A STORY
             const synopsis = existingSynopses.find((item: any) => item.id === synopsisId ); // FIND THE SPECIFIC SYNOPSIS
             if (!synopsis) throw new Error("Synopsis not found");
 
@@ -828,13 +839,24 @@ export class StoryServiceV2 implements IStoryService {
         }
     }
 
-    private deactivateSynopses = async (story: any) => {
+    private activateSynopses = async (story: any) => {
         return await this.synopsisRepo.updateMany({ 
             where: { 
                 storyId: story?.id,   
             },
             data: {
                 active: true
+            },
+        });
+    }
+
+    private deactivateSynopses = async (story: any) => {
+        return await this.synopsisRepo.updateMany({ 
+            where: { 
+                storyId: story?.id,   
+            },
+            data: {
+                active: false
             },
         });
     }

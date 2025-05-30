@@ -315,6 +315,7 @@ model Synopsis {
   contentType           Json?
   projectDescription        String?
   publicId                  String?
+  metaData           Json?
 
   characters            Character[]
   synopsisCharacters     SynopsisCharacter[]

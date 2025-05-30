@@ -101,8 +101,8 @@ export class MiddlewareService implements IMiddlewareService {
 			
 			if (!verifiedUser) res.status(401).json({ message: 'Token verification error' });
 
-			console.log({verifiedUser});
-			console.log(req.path);
+			// console.log({verifiedUser});
+			// console.log(req.path);
 			
 			let auth_user: any;
 
