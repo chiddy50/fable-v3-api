@@ -39,7 +39,7 @@ export class StoryService implements IStoryService {
 
     public getPublicStories = async (req: Request, res: Response): Promise<void> => {
         try {
-            const { page = 1, limit, genre, genres } = req.query;
+            const { page = 1, limit, genre, genres, status = "published" } = req.query;
 
             // Convert page and limit to numbers with defaults
             const pageNumber = parseInt(page as string, 10) || 1;
@@ -78,7 +78,7 @@ export class StoryService implements IStoryService {
             }
 
             const whereClause: any = {
-                status: "published",
+                status: status,
             };
 
             // Add genre filter if we have any valid genre IDs
