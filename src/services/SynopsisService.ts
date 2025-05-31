@@ -148,7 +148,7 @@ export class SynopsisService implements ISynopsisService {
     ): Promise<void> => {
         try {
             const characterId = req.params.id;
-            const { relationshipToOtherCharacters, storyId, synopsisId } = req.body;
+            const { relationshipToOtherCharacters, storyId, synopsisId, characterPublicId } = req.body;
 
             let response = await this.characterRepo.update({
                 where: {
@@ -346,6 +346,7 @@ export class SynopsisService implements ISynopsisService {
                     synopsisId: synopsisId,
                     public_id: character.id,
                     ...(character.name && { name: character.name }),                    
+                    ...(character.public_id && { public_id: character.public_id }),                    
                     ...(character.alias && { alias: character.alias }),                    
                     ...(character.gender && { gender: character.gender }),                    
                     ...(character.age && { age: character.age }),                    
